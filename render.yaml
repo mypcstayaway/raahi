@@ -1,0 +1,25 @@
+# One-click setup for Render (render.com → New → Blueprint → pick this repo).
+services:
+  - type: web
+    name: raahi
+    runtime: node
+    plan: free
+    buildCommand: echo "Nothing to build"
+    startCommand: node server.js
+    healthCheckPath: /api/config
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SECURE_COOKIES
+        value: "1"
+      # Fill these in on Render (Environment tab). They are never stored in the code.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TINYFISH_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: TURSO_URL
+        sync: false
+      - key: TURSO_TOKEN
+        sync: false

@@ -1,0 +1,9 @@
+{
+  "name": "raahi",
+  "version": "1.0.0",
+  "description": "Raahi – free trip planner: day-by-day itineraries, live checks, route optimiser and an AI travel assistant.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node --test --test-concurrency=1 test/*.test.js" },
+  "engines": { "node": ">=22.13" },
+  "license": "MIT"
+}

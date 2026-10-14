@@ -1,0 +1,99 @@
+// Raahi app shell: sign-in state, page router, chat box.
+import { $, $$, api, state, esc, initials, toast } from "./core.js";
+import * as home from "./home.js";
+import * as account from "./account.js";
+import * as wizard from "./wizard.js";
+import * as trip from "./trip.js";
+import * as explore from "./explore.js";
+import * as route from "./route.js";
+import * as chat from "./chat.js";
+import * as now from "./now.js";
+
+const PAGES = [
+  [/^\/?$/, home, "home", false],
+  [/^\/login$/, account.login, "", false],
+  [/^\/welcome$/, account.welcome, "", true],
+  [/^\/profile$/, account.profile, "", true],
+  [/^\/plan$/, wizard, "plan", true],
+  [/^\/trip\/([\w-]+)$/, trip, "home", true],
+  [/^\/s\/([\w-]+)$/, trip, "", false, true],
+  [/^\/explore$/, explore, "explore", true],
+  [/^\/route$/, route, "route", false],
+  [/^\/now$/, now, "home", true],
+];
+
+let cleanup = null;
+export async function go(hash) { if (location.hash !== hash) location.hash = hash; else render(); }
+window.addEventListener("hashchange", render);
+
+export function setUser(u) {
+  state.user = u;
+  const me = $("#me");
+  if (u && !u.guest) { me.href = "#/profile"; me.innerHTML = u.picture ? `<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">` : esc(initials(u)); me.title = u.name || "Account"; }
+  else if (u && u.guest) { me.href = "#/profile"; me.textContent = "👤"; me.title = "Guest – tap to save your account"; }
+  else { me.href = "#/login"; me.textContent = "Sign in"; me.style.width = "auto"; me.style.padding = "0 12px"; me.style.borderRadius = "99px"; return; }
+  me.style.width = ""; me.style.padding = ""; me.style.borderRadius = "";
+}
+
+async function render() {
+  let path = location.hash.replace(/^#/, "").split("?")[0] || "/";
+  const query = new URLSearchParams(location.hash.split("?")[1] || "");
+  const m = location.pathname.match(/^\/t\/([\w-]+)/);
+  if (m && (path === "/" || !location.hash)) path = "/s/" + m[1];
+  if (path === "/route" && location.pathname === "/route" && !location.hash) path = "/route";
+  if (!location.hash && location.pathname === "/route") path = "/route";
+  const hit = PAGES.find(([re]) => re.test(path)) || PAGES[0];
+  const [re, mod, nav, needUser, shared] = hit;
+  const params = path.match(re).slice(1);
+  if (cleanup) { try { cleanup(); } catch {} cleanup = null; }
+  $$("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === nav && !!nav));
+  const view = $("#view");
+  view.innerHTML = "";
+  $("#toasts").innerHTML = "";
+  window.scrollTo(0, 0);
+  if (needUser && !state.user) { state.after = location.hash; cleanup = await account.login.render(view, [], query); return; }
+  if (needUser && state.user && !state.user.prefs.onboarded && mod !== account.welcome && mod !== account.profile) { state.after = location.hash; location.hash = "#/welcome"; return; }
+  state.page = { name: nav || path, params, tripId: mod === trip && !shared ? params[0] : null };
+  chat.setContext(state.page.tripId);
+  try { cleanup = (await mod.render(view, params, query, { shared })) || null; }
+  catch (e) { console.error(e); view.innerHTML = `<div class="card"><h2>Something went wrong</h2><p class="err">${esc(e.message)}</p><a class="btn" href="#/">Go home</a></div>`; }
+  view.focus({ preventScroll: true });
+}
+
+// After signing in, continue where the person was going.
+export function afterLogin(res) {
+  setUser(res.user);
+  if (!res.user.prefs.onboarded) { location.hash = "#/welcome"; return; }
+  const next = state.after && !/login/.test(state.after) ? state.after : "#/";
+  state.after = null;
+  if (location.hash === next) render(); else location.hash = next;
+}
+
+// Google sign-in button (only when the server has a Client ID).
+let gisReady = null;
+export function googleButton(el) {
+  if (!state.config.googleClientId) { el.innerHTML = ""; return; }
+  gisReady = gisReady || new Promise((ok, bad) => {
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.onload = ok; s.onerror = bad;
+    document.head.appendChild(s);
+  });
+  gisReady.then(() => {
+    google.accounts.id.initialize({
+      client_id: state.config.googleClientId,
+      callback: async r => { try { afterLogin(await api("/api/auth/google", { credential: r.credential })); toast("Signed in with Google"); } catch (e) { toast(e.message, true); } },
+    });
+    google.accounts.id.renderButton(el, { theme: "outline", size: "large", text: "continue_with", shape: "pill", width: Math.min(320, el.clientWidth || 320) });
+  }).catch(() => { el.innerHTML = `<p class="help">Google sign-in couldn't load. Check your internet.</p>`; });
+}
+
+(async function boot() {
+  try {
+    const slow = setTimeout(() => toast("Waking Raahi up… your saved trips are shown meanwhile."), 3000);
+    const [cfg, me] = await Promise.all([api("/api/config"), api("/api/me")]).finally(() => clearTimeout(slow));
+    state.config = cfg; setUser(me.user);
+  } catch (e) { state.config = {}; setUser(null); toast(e.message, true); }
+  chat.init();
+  render();
+  if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("/sw.js").catch(() => {});
+})();

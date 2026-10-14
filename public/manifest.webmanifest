@@ -1,0 +1,34 @@
+{
+  "name": "Raahi – trip planner",
+  "short_name": "Raahi",
+  "description": "Plan every day of your trip and get guided live.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f4ef",
+  "theme_color": "#c8362f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Next step",
+      "short_name": "Next step",
+      "url": "/#/now",
+      "icons": [
+        {
+          "src": "/icon.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "Plan a trip",
+      "url": "/#/plan"
+    }
+  ]
+}

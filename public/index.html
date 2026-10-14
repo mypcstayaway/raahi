@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Raahi – plan every day of your trip</title>
+<meta name="description" content="Free trip planner for India and abroad: day-by-day plans around opening hours, the shortest route, live checks and an AI travel assistant.">
+<meta name="theme-color" content="#c8362f">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#/" aria-label="Raahi home">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#c8362f"/><path d="M14 46 C22 20, 34 50, 50 18" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="14" cy="46" r="5" fill="#fff"/><circle cx="50" cy="18" r="5" fill="#fff"/></svg>
+      Raahi
+    </a>
+    <nav class="main" aria-label="Main">
+      <a href="#/" data-nav="home">My trips</a>
+      <a href="#/plan" data-nav="plan">Plan a trip</a>
+      <a href="#/explore" data-nav="explore">Explore</a>
+      <a href="#/route" data-nav="route">Route optimiser</a>
+    </nav>
+    <a class="avatar" id="me" href="#/login" aria-label="Account" title="Account">?</a>
+  </div>
+</header>
+
+<main id="view" class="wrap" tabindex="-1"></main>
+
+<nav class="tabs" aria-label="Main">
+  <a href="#/" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Trips</a>
+  <a href="#/plan" data-nav="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Plan</a>
+  <a href="#/explore" data-nav="explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Explore</a>
+  <a href="#/route" data-nav="route"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18c6 0 4-12 10-12"/></svg>Route</a>
+  <button type="button" id="tabChat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg>Ask Raahi</button>
+</nav>
+
+<button class="fab" id="fab" type="button" aria-label="Ask Raahi">💬 Ask Raahi</button>
+<section class="chat" id="chat" hidden aria-label="Ask Raahi chat"></section>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
