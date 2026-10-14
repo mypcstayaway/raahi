@@ -18,7 +18,7 @@ const places = require("./lib/places");
 const trips = require("./lib/trips");
 const { explore, advice } = require("./lib/explore");
 const { plan: routePlan } = require("./lib/route");
-const { parseGmaps, expand, findUrl, isFullMapsUrl, userErr, MAX } = require("./lib/google");
+const { parseGmaps, parsePlace, expand, findUrl, isFullMapsUrl, userErr, MAX } = require("./lib/google");
 
 const PUBLIC = path.join(__dirname, "public");
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".ico": "image/x-icon" };
@@ -71,7 +71,7 @@ const ropts = b => ({ fixed: b.fixed !== false, round: !!b.round });
 
 // ---------- API table: "METHOD /path/:param" ----------
 const routes = {
-  "GET /api/config": async () => ({ googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
+  "GET /api/config": async () => ({ version: "2026-10-14c", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
   "GET /api/me": async ({ user }) => ({ user }),
   "POST /api/auth/register": async ({ req, res, body, user, ip }) => auth.api.register(req, res, body, user, ip),
   "POST /api/auth/login": async ({ req, res, body, user, ip }) => auth.api.login(req, res, body, user, ip),
@@ -107,6 +107,24 @@ const routes = {
   },
 
   // route optimiser
+  // Paste a Google Maps link of one place (hotel, apartment, shop...) instead of typing it.
+  "POST /api/place-link": async ({ body }) => {
+    let link = findUrl(body.url);
+    if (!link) throw userErr("Paste a Google Maps link first.");
+    if (!isFullMapsUrl(link)) {
+      try { link = await expand(link); }
+      catch (e) { if (e.net) throw e; throw userErr("That link didn't open a Google Maps place. In Google Maps, open the place, tap Share, then Copy link."); }
+    }
+    const p = parsePlace(link);
+    if (p.lat == null) {
+      const g = await places.geocode(p.name);
+      if (!g) throw userErr(`I couldn't find "${p.name}" on the map.`);
+      Object.assign(p, { lat: g.lat, lng: g.lng });
+    }
+    let sub = "", country = "";
+    try { const r = await places.reverse(p.lat, p.lng); sub = r.city || ""; country = r.country || ""; if (!p.name) p.name = r.name; } catch {}
+    return { title: p.name || `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`, sub, lat: p.lat, lng: p.lng, country };
+  },
   "POST /api/route/import": async ({ body }) => {
     let link = findUrl(body.url);
     if (!link) throw userErr("Paste a Google Maps link first.");

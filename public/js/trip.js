@@ -227,7 +227,7 @@ export async function render(view, params, query, { shared } = {}) {
       <div><label class="f" style="margin-top:0">Change pace</label><select id="np" style="width:auto">${["fast", "balanced", "slow", "auto"].map(v => `<option value="${v}" ${(d.input.pace || "balanced") === v ? "selected" : ""}>${v === "auto" ? "Let Raahi decide" : v[0].toUpperCase() + v.slice(1)}</option>`).join("")}</select></div><button class="btn small" id="rp">Re-plan</button>
       <span class="grow"></span><button class="btn small ghost" id="del" style="color:var(--bad);border-color:var(--bad)">Delete trip</button></div>
       <div style="margin-top:12px"><label class="f" style="margin-top:0">Change where you're staying${d.input.segments.length > 1 ? ` in ${esc(city(0))}` : ""}</label><div id="nst"></div></div>`;
-    const ps = placeSearch({ placeholder: "Hotel or area", value: d.input.segments[0].stay, bias: d.input.segments[0].destination, allowHere: true, onPick: async v => { try { t = await api(`/api/trips/${id}/replan`, { stay: v, seg: 0 }); toast("Re-planned from your new stay"); main(); } catch (e) { toast(e.message, true); } } });
+    const ps = placeSearch({ placeholder: "Hotel, area or Google Maps link", value: d.input.segments[0].stay, bias: d.input.segments[0].destination, allowHere: true, onPick: async v => { try { t = await api(`/api/trips/${id}/replan`, { stay: v, seg: 0 }); toast("Re-planned from your new stay"); main(); } catch (e) { toast(e.message, true); } } });
     $("#nst", m).appendChild(ps.el);
     $("#ren", m).onclick = async () => { t = await api(`/api/trips/${id}`, { title: $("#nn", m).value }, { method: "PATCH" }); $("#ttl").textContent = t.title; toast("Renamed"); };
     $("#rp", m).onclick = async e => { busy(e.currentTarget, true, "Re-planning…"); try { t = await api(`/api/trips/${id}/replan`, { pace: $("#np", m).value }); toast("Re-planned"); main(); } catch (err) { toast(err.message, true); busy(e.currentTarget, false); } };
@@ -286,7 +286,7 @@ export async function render(view, params, query, { shared } = {}) {
     wireFood(box);
     if ($("#rainGo", box)) $("#rainGo", box).onclick = e => runRain(e.currentTarget, box, day);
     if (!shared) {
-      const ps = placeSearch({ placeholder: "Any place: temple, café, shop…", bias: () => d.input.segments[x.seg].destination });
+      const ps = placeSearch({ placeholder: "Any place, or paste a Google Maps link", bias: () => d.input.segments[x.seg].destination });
       $("#addPs", box).appendChild(ps.el);
       $("#addGo", box).onclick = async e => {
         const v = ps.get(); if (!v || !v.label) return ps.error("Type a place first.");

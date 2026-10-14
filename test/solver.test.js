@@ -47,3 +47,14 @@ test("unreachable stop returns null", () => {
   const d = [[0, 1, 1e12], [1, 0, 1e12], [1e12, 1e12, 0]];
   assert.strictEqual(solve(d, { fixed: true }), null);
 });
+
+test("reads one place from Google Maps links", () => {
+  const { parsePlace } = require("../lib/google");
+  const a = parsePlace("https://www.google.com/maps/place/Pine+Oak+Apartments/@29.3912,79.4501,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x1!8m2!3d29.39187!4d79.45213!16s");
+  assert.equal(a.name, "Pine Oak Apartments"); assert.equal(a.lat, 29.39187); assert.equal(a.lng, 79.45213);
+  const b = parsePlace("https://maps.google.com/?q=29.38,79.46");
+  assert.equal(b.lat, 29.38); assert.equal(b.lng, 79.46);
+  const c = parsePlace("https://www.google.com/maps/search/?api=1&query=Naini%20Lake%2C%20Nainital");
+  assert.equal(c.name, "Naini Lake, Nainital"); assert.equal(c.lat, undefined);
+  assert.throws(() => parsePlace("https://example.com/x"));
+});

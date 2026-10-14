@@ -102,7 +102,7 @@ export const CAT_ICON = { monument: "🏛️", temple: "🛕", mosque: "🕌", g
 
 // ---------- place search box with suggestions ----------
 // Returns { el, get(), set(place), input }. place = {label, lat, lng}
-export function placeSearch({ placeholder = "Search a place", value = null, bias, onPick, allowHere = false, id } = {}) {
+export function placeSearch({ placeholder = "Search a place or paste a Google Maps link", value = null, bias, onPick, allowHere = false, id } = {}) {
   const el = document.createElement("div");
   el.className = "ps";
   el.innerHTML = `<div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" ${id ? `id="${id}"` : ""} placeholder="${esc(placeholder)}" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false">${allowHere ? `<button type="button" class="btn ghost small here" title="Use my current location" aria-label="Use my current location" style="min-height:44px">📍</button>` : ""}</div><div class="found"></div>`;
@@ -131,6 +131,17 @@ export function placeSearch({ placeholder = "Search a place", value = null, bias
     picked = inp.value.trim() ? { label: inp.value.trim() } : null; show("");
     clearTimeout(timer); ctrl && ctrl.abort();
     const q = inp.value.trim();
+    if (/https?:\/\/\S*(google\.|goo\.gl|g\.co)/i.test(q)) { // a pasted Google Maps link
+      close(); show("Reading your Google Maps link…");
+      timer = setTimeout(async () => {
+        try {
+          const it = await api("/api/place-link", { url: q });
+          if (inp.value.trim() !== q) return;
+          choose(it); show("✓ From your Google Maps link: " + [it.title, it.sub].filter(Boolean).join(", "));
+        } catch (e) { if (inp.value.trim() === q) show(e.message, true); }
+      }, 100);
+      return;
+    }
     if (q.length < 2) return close();
     timer = setTimeout(async () => {
       ctrl = new AbortController();

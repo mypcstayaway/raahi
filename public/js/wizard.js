@@ -197,7 +197,7 @@ export async function render(view, params, query) {
       const wrap = document.createElement("div");
       wrap.style.marginBottom = "14px";
       wrap.innerHTML = `<label class="f">${w.segments.length > 1 ? "In " + esc(s.destination.label.split(",")[0]) : "Stay"}</label>`;
-      const ps = placeSearch({ placeholder: "Hotel name or area, e.g. Hotel Clarks Shiraz", value: s.stay, bias: s.destination, onPick: v => (s.stay = v), allowHere: true });
+      const ps = placeSearch({ placeholder: "Hotel, area or paste its Google Maps link", value: s.stay, bias: s.destination, onPick: v => (s.stay = v), allowHere: true });
       ps.input.addEventListener("input", () => (s.stay = ps.get()));
       wrap.appendChild(ps.el);
       const nb = document.createElement("div"); nb.className = "row"; nb.style.marginTop = "6px";

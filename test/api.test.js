@@ -379,6 +379,18 @@ test("route optimiser: share links and 'Your location' links", async () => {
   assert.strictEqual(y2.data.result.stops.length, 3);
 });
 
+test("paste a Google Maps link of one place", async () => {
+  const a = await call("POST", "/api/place-link", { url: "https://www.google.com/maps/place/Pine+Oak+Apartments/@29.39,79.45,17z/data=!4m6!3m5!8m2!3d29.39187!4d79.45213" });
+  assert.strictEqual(a.status, 200, JSON.stringify(a.data));
+  assert.strictEqual(a.data.title, "Pine Oak Apartments");
+  assert.strictEqual(a.data.lat, 29.39187);
+  const b = await call("POST", "/api/place-link", { url: "https://www.google.com/maps/search/?api=1&query=Taj%20Mahal" });
+  assert.strictEqual(b.status, 200, JSON.stringify(b.data));
+  assert.ok(b.data.lat != null);
+  const c = await call("POST", "/api/place-link", { url: "hello" });
+  assert.strictEqual(c.status, 400);
+});
+
 test("static pages and SPA paths", async () => {
   for (const p of ["/", "/route", "/t/abc"]) assert.strictEqual((await fetch(base + p)).status, 200);
   assert.strictEqual((await fetch(base + "/../server.js")).status, 404);
