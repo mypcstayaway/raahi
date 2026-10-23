@@ -62,6 +62,10 @@ try {
     await shot(p, "03-home");
   });
   await step("wizard: where / when (ask Raahi) / how long / stay / times / pace / likes / people / detail", async () => {
+    // Home shows every feature, including Baby mode, Around one place and Thread trip
+    for (const sel of ["#babyCard", "a.card[href='#/explore?mode=around']", "a.card[href='#/explore?mode=thread']"]) await p.waitForSelector(sel);
+    await p.click("#babyCard"); await p.waitForSelector("#babyCard.on"); await p.waitForTimeout(400); await shot(p, "03b-home-baby-on");
+    await p.click("#babyCard"); await p.waitForSelector("#babyCard:not(.on)");
     await p.click("a.card[href='#/plan']");
     await p.waitForSelector("text=Where are you going?");
     await p.fill("#segs input", "Agra"); await p.waitForSelector(".sug li"); await p.click(".sug li");
@@ -293,6 +297,16 @@ try {
     await p.waitForSelector("#trips a.card", { timeout: 10000 });
     const n = await p.$$eval("#trips a.card", x => x.length);
     if (n < 2) throw new Error("trips after signup: " + n);
+    // Delete a trip right from the list (tap, then confirm)
+    const before = await p.$$eval(".trip-row", x => x.length);
+    await p.click(".trip-row:last-child .trip-del");
+    await p.waitForSelector(".trip-del.armed");
+    await p.click(".trip-del.armed");
+    await p.waitForSelector("text=Trip deleted");
+    const after = await p.$$eval(".trip-row", x => x.length);
+    if (after !== before - 1) throw new Error(`delete from list: ${before} → ${after}`);
+    await p.reload(); await p.waitForSelector("#trips a.card");
+    if ((await p.$$eval(".trip-row", x => x.length)) !== before - 1) throw new Error("deleted trip came back after reload");
     await p.goto(BASE + "/#/profile");
     await p.waitForSelector("text=Your pace, learned");
     await shot(p, "19-profile");

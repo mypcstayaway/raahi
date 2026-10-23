@@ -278,9 +278,25 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 .thread-card summary,.th-stop summary{cursor:pointer}
 .th-stop{border-top:1px solid var(--line,#e5e5e5);padding:8px 0}
 
-/* Baby mode */
-.babybtn{border:1px solid var(--line,#ddd);background:transparent;color:inherit;border-radius:99px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;margin-right:8px;white-space:nowrap}
-.babybtn.on{background:#fde7ef;border-color:#e46a96;color:#9c1d4f;font-weight:700}
-.babybar{background:#fde7ef;color:#7a1640;padding:8px 16px;font-size:14px;text-align:center}
-.babybar a{color:#9c1d4f;font-weight:700;margin-left:6px}
+/* Baby mode: a real on/off switch, and the whole website turns pink */
+.babybtn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:99px;padding:5px 6px 5px 12px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-right:8px;white-space:nowrap}
+.knob{position:relative;display:inline-block;width:38px;height:22px;border-radius:99px;background:var(--line);transition:background .2s;flex:none}
+.knob:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s}
+.knob.big{width:48px;height:28px}.knob.big:after{width:22px;height:22px}
+.on>.knob,.on .knob{background:var(--thread)}
+.on>.knob:after,.on .knob:after{transform:translateX(16px)}
+.on .knob.big:after{transform:translateX(20px)}
+.babycard.on .tag{background:var(--thread);color:#fff}
+.babybar{background:var(--soft);color:var(--thread);padding:8px 16px;font-size:14px;text-align:center;border-bottom:1px solid var(--line)}
+.babybar a{color:var(--thread);font-weight:700;margin-left:6px}
+body.baby{--bg:#fff0f6;--paper:#fffafd;--soft:#fde2ee;--line:#f4c4d9;--thread:#d6336c;--mute:#8a5a70;--ink:#3b1a2a}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) body.baby{--bg:#22151d;--paper:#2c1b26;--soft:#3a2331;--line:#523246;--thread:#f06595;--mute:#c59ab0;--ink:#fbe7f0}}
+:root[data-theme=dark] body.baby{--bg:#22151d;--paper:#2c1b26;--soft:#3a2331;--line:#523246;--thread:#f06595;--mute:#c59ab0;--ink:#fbe7f0}
 @media (max-width:640px){.babybtn span{display:none}}
+
+/* Delete a trip from the list */
+.trip-row{position:relative}
+.trip-row>.card{padding-right:64px!important}
+.trip-del{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:1px solid var(--line,#ddd);background:var(--card,#fff);color:inherit;border-radius:99px;min-width:40px;height:36px;padding:0 10px;font:inherit;font-size:14px;cursor:pointer}
+.trip-del.armed{background:var(--bad,#c53030);border-color:var(--bad,#c53030);color:#fff;font-weight:700}
+.babycard.on{border-color:var(--thread)}

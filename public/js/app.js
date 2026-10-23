@@ -30,8 +30,10 @@ window.addEventListener("hashchange", render);
 function babyUI() {
   const u = state.user, on = !!(u && u.prefs && u.prefs.baby && u.prefs.baby.on);
   const b = $("#baby"); if (!b) return;
-  b.hidden = !u; b.setAttribute("aria-pressed", on); b.classList.toggle("on", on);
+  b.hidden = !u; b.setAttribute("aria-checked", on); b.classList.toggle("on", on);
   $("#babybar").hidden = !on; document.body.classList.toggle("baby", on);
+  const card = $("#babyCard");
+  if (card) { card.classList.toggle("on", on); card.setAttribute("aria-checked", on); $("#babyState").textContent = on ? "On" : "Off"; }
 }
 async function setBaby(on) {
   try {
@@ -41,7 +43,7 @@ async function setBaby(on) {
   } catch (e) { toast(e.message, true); }
 }
 document.addEventListener("click", e => {
-  if (e.target.closest("#baby")) setBaby(!(state.user.prefs.baby && state.user.prefs.baby.on));
+  if (e.target.closest("#baby, #babyCard")) setBaby(!(state.user.prefs.baby && state.user.prefs.baby.on));
   if (e.target.closest("#babyOff")) { e.preventDefault(); setBaby(false); }
 });
 
@@ -66,7 +68,8 @@ async function render() {
   const [re, mod, nav, needUser, shared] = hit;
   const params = path.match(re).slice(1);
   if (cleanup) { try { cleanup(); } catch {} cleanup = null; }
-  $$("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === nav && !!nav));
+  const navKey = nav === "explore" && query.get("mode") === "around" ? "around" : nav;
+  $$("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === navKey && !!navKey));
   const view = $("#view");
   view.innerHTML = "";
   $("#toasts").innerHTML = "";
@@ -112,6 +115,18 @@ export function googleButton(el) {
     const slow = setTimeout(() => toast("Waking Raahi up… your saved trips are shown meanwhile."), 3000);
     const [cfg, me] = await Promise.all([api("/api/config"), api("/api/me")]).finally(() => clearTimeout(slow));
     state.config = cfg; setUser(me.user);
+    // New version on the server? Throw away the old saved app files and reload once.
+    try {
+      const was = localStorage.getItem("raahi.version");
+      localStorage.setItem("raahi.version", cfg.version || "");
+      if (was && cfg.version && was !== cfg.version && !sessionStorage.getItem("raahi.reloaded")) {
+        sessionStorage.setItem("raahi.reloaded", "1");
+        if (window.caches) for (const k of await caches.keys()) await caches.delete(k);
+        const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+        if (reg) await reg.update().catch(() => {});
+        location.reload(); return;
+      }
+    } catch {}
   } catch (e) { state.config = {}; setUser(null); toast(e.message, true); }
   chat.init();
   render();

@@ -1,4 +1,4 @@
-import { $, api, state, esc, dayName, todayISO, toast } from "./core.js";
+import { $, $$, api, state, esc, dayName, todayISO, toast } from "./core.js";
 import { googleButton, afterLogin } from "./app.js";
 
 const ART = `<svg class="hero-art" viewBox="0 0 400 400" aria-hidden="true">
@@ -26,9 +26,10 @@ export async function render(view) {
       <a class="card" href="#/plan"><div class="ic">🗺️</div><h3>Plan a trip</h3><p class="mute">Day-by-day plan in the shortest order, around opening times, lunch and your pace.</p></a>
       <a class="card" href="#/plan?here=1"><div class="ic">📍</div><h3>I'm here now</h3><p class="mute">Already at a place? Plan the rest of today from where you are, starting now.</p></a>
       <a class="card" href="#/explore"><div class="ic">🧭</div><h3>Where can I go?</h3><p class="mute">Your days and budget → trip ideas, or a 🧵 thread: one loop through many places and back home.</p></a>
-      <a class="card" href="#/explore?mode=around"><div class="ic">🗺️</div><h3>Around one place</h3><p class="mute">"Going to Coimbatore for 6 days." 1 day there, then Palani, Kodaikanal and more, one after another.</p></a>
+      <button type="button" role="switch" aria-checked="${!!(u.prefs && u.prefs.baby && u.prefs.baby.on)}" class="card babycard${u.prefs && u.prefs.baby && u.prefs.baby.on ? " on" : ""}" id="babyCard" style="text-align:left;font:inherit;color:inherit;cursor:pointer"><div class="between"><div class="ic">👶</div><i class="knob big" aria-hidden="true"></i></div><h3>Baby mode <span class="tag" id="babyState">${u.prefs && u.prefs.baby && u.prefs.baby.on ? "On" : "Off"}</span></h3><p class="mute">Travelling with a baby? Every plan skips risky places, adds nap breaks and baby-friendly stops.</p></button>
+      <a class="card" href="#/explore?mode=around"><div class="ic">🏞️</div><h3>Around one place</h3><p class="mute">"Going to Coimbatore for 6 days." 1 day there, then Palani, Kodaikanal and more, one after another.</p></a>
       <a class="card" href="#/explore?mode=thread"><div class="ic">🧵</div><h3>Thread trip</h3><p class="mute">"9 days from Agra, include Coimbatore." One loop through many places, every leg and tip, back home.</p></a>
-      <a class="card" href="#/route"><div class="ic">📍</div><h3>Route optimiser</h3><p class="mute">Paste a Google Maps link or type stops. Get the shortest order.</p></a>
+      <a class="card" href="#/route"><div class="ic">🔀</div><h3>Route optimiser</h3><p class="mute">Paste a Google Maps link or type stops. Get the shortest order.</p></a>
     </div>
     <div class="between"><h2 style="margin:0">Your trips</h2><a class="btn small main" href="#/plan">+ New trip</a></div>
     <div id="trips" class="list" style="margin-top:12px"><div class="skeleton" style="height:70px"></div></div>
@@ -42,8 +43,21 @@ export async function render(view) {
     const end = t.start && t.days ? new Date(new Date(t.start + "T00:00:00").getTime() + (t.days - 1) * 864e5).toISOString().slice(0, 10) : null;
     const live = t.start && t.start <= today && end >= today;
     const st = t.status === "planning" ? `<span class="tag warn">Planning…</span>` : t.status === "review" ? `<span class="tag warn">Pick your places</span>` : t.status === "error" ? `<span class="tag bad">Needs a retry</span>` : live ? `<span class="tag red">Today</span>` : "";
-    return `<a class="card" href="#/trip/${esc(t.id)}${live ? "?tab=live" : ""}" style="padding:14px 16px"><div class="between"><div><b style="font-size:16px">${esc(t.title)}</b><div class="mute" style="font-size:13px">${t.start ? dayName(t.start) : "Dates not set"}${t.destination ? " · " + esc(t.destination) : ""}</div></div>${st}</div></a>`;
+    return `<div class="trip-row" data-id="${esc(t.id)}"><a class="card" href="#/trip/${esc(t.id)}${live ? "?tab=live" : ""}" style="padding:14px 16px"><div class="between"><div><b style="font-size:16px">${esc(t.title)}</b><div class="mute" style="font-size:13px">${t.start ? dayName(t.start) : "Dates not set"}${t.destination ? " · " + esc(t.destination) : ""}</div></div>${st}</div></a><button type="button" class="trip-del" data-del="${esc(t.id)}" aria-label="Delete ${esc(t.title)}" title="Delete this trip">🗑️</button></div>`;
   }).join("");
+  // Delete a trip right from the list: tap once to arm, tap again to delete (no pop-ups).
+  box.addEventListener("click", async e => {
+    const b = e.target.closest("[data-del]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    if (!b.classList.contains("armed")) { $$(".trip-del.armed", box).forEach(x => { x.classList.remove("armed"); x.textContent = "🗑️"; }); b.classList.add("armed"); b.textContent = "Delete?"; setTimeout(() => { if (b.isConnected && b.classList.contains("armed")) { b.classList.remove("armed"); b.textContent = "🗑️"; } }, 4000); return; }
+    b.disabled = true;
+    try {
+      await api(`/api/trips/${b.dataset.del}`, {}, { method: "DELETE" });
+      const row = b.closest(".trip-row"); row.remove();
+      toast("Trip deleted");
+      if (!$(".trip-row", box)) box.innerHTML = `<div class="card mute">No trips yet. <a href="#/plan">Plan your first one</a> – it takes about a minute.</div>`;
+    } catch (err) { b.disabled = false; toast(err.message, true); }
+  });
   const now = list.find(t => { if (!t.start || !t.days) return false; const end = new Date(new Date(t.start + "T00:00:00").getTime() + (t.days - 1) * 864e5).toISOString().slice(0, 10); return t.start <= today && end >= today; });
   if (now) $("#today").innerHTML = `<a class="btn main" href="#/now" style="margin-bottom:10px">🧭 What's my next step?</a><a class="card" href="#/trip/${esc(now.id)}?tab=live" style="margin-bottom:18px;border-color:var(--thread)"><div class="between"><div><span class="tag red">On your trip today</span><h3 style="margin:8px 0 2px">${esc(now.title)}</h3><p class="mute" style="margin:0">Open live mode: check in, see what's still open, re-plan the rest of the day.</p></div><span class="btn main">Go live →</span></div></a>`;
 }

@@ -71,7 +71,7 @@ const ropts = b => ({ fixed: b.fixed !== false, round: !!b.round });
 
 // ---------- API table: "METHOD /path/:param" ----------
 const routes = {
-  "GET /api/config": async () => ({ version: "2026-10-23c", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
+  "GET /api/config": async () => ({ version: "2026-10-23f", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
   "GET /api/me": async ({ user }) => ({ user }),
   "POST /api/auth/register": async ({ req, res, body, user, ip }) => auth.api.register(req, res, body, user, ip),
   "POST /api/auth/login": async ({ req, res, body, user, ip }) => auth.api.login(req, res, body, user, ip),
@@ -331,7 +331,7 @@ const server = http.createServer(async (req, res) => {
   fs.readFile(file, (err, data) => {
     if (err) return send(req, res, 404, "Not found", "text/plain");
     const ext = path.extname(file);
-    send(req, res, 200, data, TYPES[ext] || "application/octet-stream", { "Cache-Control": ext === ".html" || p === "/sw.js" ? "no-cache" : "public, max-age=3600" });
+    send(req, res, 200, data, TYPES[ext] || "application/octet-stream", { "Cache-Control": [".html", ".js", ".css", ".webmanifest"].includes(ext) || p === "/sw.js" ? "no-cache" : "public, max-age=3600" });
   });
 });
 
