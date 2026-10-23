@@ -391,6 +391,29 @@ test("paste a Google Maps link of one place", async () => {
   assert.strictEqual(c.status, 400);
 });
 
+test("thread trip: a loop through several places, then a full plan", async () => {
+  const r = await call("POST", "/api/thread", { home: { label: "Agra", lat: 27.1767, lng: 78.0081 }, days: 5, include: "Isha, Palani, Meenakshi Temple", travellers: 2 });
+  assert.strictEqual(r.status, 200, JSON.stringify(r.data));
+  const t = r.data.thread;
+  assert.strictEqual(t.stops.length, 4);
+  assert.strictEqual(t.gateway.name, "Bengaluru");
+  assert.ok(t.stops.every(x => x.lat != null), "every stop is on the map");
+  assert.ok(t.stops[1].plan[0].what.includes("Palani"));
+  assert.ok(t.stops[0].leg.km > 0, "road distance measured");
+  // Plan it day by day
+  const segs = t.stops.map(x => ({ destination: { label: x.search, lat: x.lat, lng: x.lng }, days: Math.max(1, x.nights), stay: { decide: true }, thread: x }));
+  const c = await call("POST", "/api/trips", { segments: segs, thread: { title: t.title, home: r.data.home, gateway: t.gateway, returnLeg: t.returnLeg, loop: true }, start: "2026-12-01", travellers: 2, detail: "quick" });
+  assert.strictEqual(c.status, 200, JSON.stringify(c.data));
+  const data = (await waitTrip(c.data.id)).data;
+  assert.strictEqual(data.status, "ready", data.error);
+  assert.strictEqual(data.input.thread.gateway.name, "Bengaluru");
+  assert.strictEqual(data.input.segments.length, 4);
+  assert.strictEqual(data.days.length, 5);
+  assert.match(data.days[0].note, /Bengaluru/);
+  assert.match(data.days[1].note, /Travel day: Coimbatore → Palani/);
+  assert.match(data.days[4].note, /Head home/);
+});
+
 test("static pages and SPA paths", async () => {
   for (const p of ["/", "/route", "/t/abc"]) assert.strictEqual((await fetch(base + p)).status, 200);
   assert.strictEqual((await fetch(base + "/../server.js")).status, 404);

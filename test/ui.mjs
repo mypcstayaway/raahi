@@ -217,6 +217,32 @@ try {
     const vals = await p.$$eval("#segs input", x => x.map(i => i.value));
     if (vals.length !== 2) throw new Error("prefill segments " + vals);
   });
+  await step("thread trip: loop through many places → plan it day by day", async () => {
+    await p.goto(BASE + "/#/explore");
+    await p.waitForSelector("text=Where can I go?");
+    await p.click("#mode [data-v=thread]");
+    await p.fill("#dy", "5"); await p.fill("#inc", "Isha, Palani, Meenakshi Temple"); await p.fill("#rg", "Tamil Nadu");
+    await p.click("#go");
+    await p.waitForSelector(".thread-line", { timeout: 10000 });
+    await p.waitForSelector("text=First, reach Bengaluru");
+    await p.waitForSelector("text=Shayana Aarti at Meenakshi Temple");
+    await p.$eval(".thread-head", el => el.scrollIntoView());
+    await shot(p, "17b-thread");
+    await p.click("#planT");
+    await p.waitForSelector("text=Where are you going?");
+    const vals = await p.$$eval("#segs input", x => x.map(i => i.value));
+    if (vals.length !== 4) throw new Error("thread prefill segments " + vals);
+    await p.click("#rest");
+    for (let i = 0; i < 6 && !/#\/trip\//.test(p.url()); i++) { await p.click("#next", { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300); }
+    await p.waitForURL(/#\/trip\//, { timeout: 10000 });
+    const r = await Promise.race([p.waitForSelector("button#go:has-text('day-by-day')", { timeout: 20000 }).then(() => "review"), p.waitForSelector(".thread-card", { timeout: 20000 }).then(() => "plan")]);
+    if (r === "review") await p.click("button#go:has-text('day-by-day')");
+    await p.waitForSelector(".thread-card", { timeout: 20000 });
+    await p.waitForSelector("text=Temples & hills loop");
+    const title = await p.textContent("#ttl");
+    if (!/^5 days/.test(title)) throw new Error("thread trip length changed: " + title);
+    await shot(p, "17c-thread-trip");
+  });
   await step("route optimiser: share link + typed stops (spinner clears)", async () => {
     await p.goto(BASE + "/#/route");
     await p.waitForSelector("text=Route optimiser");
@@ -249,6 +275,7 @@ try {
     await p.fill("#n", "Yug Gupta"); await p.fill("#i", "9876543210"); await p.fill("#p", "secret12");
     await p.click("#f button");
     await p.waitForSelector("text=Your trips");
+    await p.waitForSelector("#trips a.card", { timeout: 10000 });
     const n = await p.$$eval("#trips a.card", x => x.length);
     if (n < 2) throw new Error("trips after signup: " + n);
     await p.goto(BASE + "/#/profile");

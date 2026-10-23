@@ -277,7 +277,8 @@ export async function render(view, params, query) {
   async function submit(btn) {
     busy(btn, true, "Starting…");
     const body = {
-      segments: w.segments.map(s => ({ destination: s.destination, days: s.days, stay: s.stay && (s.stay.label || s.stay.decide) ? s.stay : null })),
+      segments: w.segments.map(s => ({ destination: s.destination, days: s.days, stay: s.stay && (s.stay.label || s.stay.decide) ? s.stay : null, thread: s.thread || null })),
+      thread: w.thread || null,
       start: w.dates === "fixed" && w.start ? w.start : null,
       hereNow: w.hereNow, here: w.hereNow ? w.here : null, nowMin: w.hereNow ? nowMin() : null,
       startTime: w.startTime, endTime: w.endTime || null, arriveTime: w.arriveTime || null, leaveTime: w.leaveTime || null,

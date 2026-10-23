@@ -128,6 +128,33 @@ export async function render(view, params, query, { shared } = {}) {
   }
 
   // ---------- the plan ----------
+  // Thread trips: the whole loop at a glance, with how to move between stops and the must-dos.
+  function threadCard(inp) {
+    const T = inp.thread, IC = { car: "🚗", bus: "🚌", train: "🚆", flight: "✈️", ferry: "⛴️", walk: "🚶" };
+    const home = T.home && T.home.label ? T.home.label.split(",")[0] : "Home";
+    const names = [home, ...(T.gateway ? [T.gateway.name] : []), ...inp.segments.map(s => s.destination.label.split(",")[0]), ...(T.loop ? [home] : [])];
+    let dayNo = 1;
+    const rows = inp.segments.map((s, i) => {
+      const x = s.thread || {}, L = x.leg, from = dayNo; dayNo += s.days;
+      const prev = i ? inp.segments[i - 1].destination.label.split(",")[0] : T.gateway ? T.gateway.name : home;
+      return `${L ? `<div class="help" style="margin:8px 0 4px">${IC[L.mode] || "➜"} ${esc(L.from || prev)} → ${esc(x.name || s.destination.label.split(",")[0])}${L.roadHours || L.hours ? ` · ~${dur(Math.round((L.roadHours || L.hours) * 60))}` : ""}${L.km ? ` · ${L.km} km` : ""}${L.fare ? ` · ${esc(L.fare)}` : ""}${L.depart ? ` · leave ${esc(L.depart)}` : ""}${L.tip ? ` · 💡 ${esc(L.tip)}` : ""}</div>` : ""}
+        <details class="th-stop"><summary><b>${esc(s.destination.label.split(",")[0])}</b> <span class="mute">· Day ${from}${s.days > 1 ? `–${from + s.days - 1}` : ""}${x.arriveBy ? ` · reach by ${esc(x.arriveBy)}` : ""}</span></summary>
+          ${(x.plan || []).length ? `<ol class="th-plan">${x.plan.map(p => `<li>${p.time ? `<b>${esc(p.time)}</b> ` : ""}${esc(p.what)}${p.tip ? `<br><small class="mute">💡 ${esc(p.tip)}</small>` : ""}</li>`).join("")}</ol>` : ""}
+          ${(x.timings || []).length ? `<p style="margin:6px 0 0;font-size:14px">🕰️ ${x.timings.map(z => `<b>${esc(z.what)}</b>: ${esc(z.time)}`).join(" · ")}</p>` : ""}
+          ${(x.fees || []).length ? `<p style="margin:6px 0 0;font-size:14px">🎟️ ${x.fees.map(z => `${esc(z.what)}: <b>${esc(z.price)}</b>`).join(" · ")}</p>` : ""}
+          ${(x.warnings || []).length ? `<div class="note warn" style="margin-top:8px">${x.warnings.map(w => `⚠️ ${esc(w)}`).join("<br>")}</div>` : ""}
+          ${x.stay ? `<p style="margin:6px 0 0;font-size:14px">🏨 ${esc(x.stay)}</p>` : ""}${x.food ? `<p style="margin:4px 0 0;font-size:14px">🍛 ${esc(x.food)}</p>` : ""}
+        </details>`;
+    }).join("");
+    const R = T.returnLeg;
+    return `<details class="card thread-card" style="margin-bottom:14px" ${tab === "plan" ? "open" : ""}><summary><b>🧵 ${esc(T.title || "Your thread")}</b> <span class="mute">· ${esc(names.join(" → "))}</span></summary>
+      ${T.summary ? `<p style="margin:8px 0">${esc(T.summary)}</p>` : ""}
+      ${T.gateway ? `<div class="help">✈️ <b>First reach ${esc(T.gateway.name)}:</b> ${esc(T.gateway.how || "")}</div>` : ""}
+      ${rows}
+      ${R && (R.to || R.mode) ? `<div class="help" style="margin-top:8px">🏠 ${IC[R.mode] || "➜"} ${esc(R.from || inp.segments[inp.segments.length - 1].destination.label.split(",")[0])} → ${esc(R.to || home)}${R.hours ? ` · ~${dur(Math.round(R.hours * 60))}` : ""}${R.fare ? ` · ${esc(R.fare)}` : ""}${R.depart ? ` · leave ${esc(R.depart)}` : ""}${R.tip ? ` · 💡 ${esc(R.tip)}` : ""}</div>` : ""}
+    </details>`;
+  }
+
   function main() {
     const d = D(), inp = d.input;
     const today = todayISO();
@@ -149,6 +176,7 @@ export async function render(view, params, query, { shared } = {}) {
       <div id="shareBox" class="card no-print" hidden style="margin-bottom:14px"></div>
       <div id="moreBox" class="card no-print" hidden style="margin-bottom:14px"></div>
       <div id="nsBox" class="no-print"></div><div id="alertBox" class="no-print"></div>
+      ${inp.thread ? threadCard(inp) : ""}
       ${d.aiError ? `<div class="note warn no-print" style="margin-bottom:10px">AI details weren't available (${esc(d.aiError)}). Places come from OpenStreetMap; ticket prices and tips are missing.</div>` : ""}
       ${d.estimatedTimes ? `<div class="note warn no-print" style="margin-bottom:10px">The road-time service was busy, so drive times are estimates. Tap “Re-plan” later for exact times.</div>` : ""}
       <div class="ttabs no-print" role="tablist">

@@ -8,6 +8,7 @@ const PLACES = {
   "kinari bazaar": [78.0158, 27.1849], "jama masjid": [78.0156, 27.1830], "guru ka taal": [77.9783, 27.2256],
   "hotel": [78.0300, 27.1650], "jaipur": [75.7873, 26.9124], "amber fort": [75.8513, 26.9855], "hawa mahal": [75.8267, 26.9239],
   mathura: [77.6737, 27.4924], vrindavan: [77.7006, 27.5650], delhi: [77.209, 28.6139], rishikesh: [78.2676, 30.0869],
+  bengaluru: [77.5946, 12.9716], coimbatore: [76.9558, 11.0168], palani: [77.5200, 10.4500], kodaikanal: [77.4892, 10.2381], madurai: [78.1198, 9.9252],
 };
 const find = q => Object.entries(PLACES).filter(([k]) => q.toLowerCase().includes(k)).sort((a, b) => b[0].length - a[0].length);
 const calls = { photon: 0, osrm: 0, overpass: 0, gemini: 0, geminiSearch: 0, weather: 0 };
@@ -48,6 +49,13 @@ function aiReply(prompt, system) {
   if (/live travel checker/.test(system)) {
     const names = [...prompt.matchAll(/^\d+\. (.+)$/gm)].map(m => m[1]);
     return "Here is what I found:\n```json\n" + JSON.stringify({ places: names.map((n, i) => ({ name: n, score: i === 0 ? 4 : 8, verdict: i === 0 ? "caution" : "go", crowd: i === 0 ? "high" : "moderate", summary: i === 0 ? "Very crowded this week due to a festival." : "Normal crowds.", alerts: i === 0 ? ["Long queues at East Gate"] : [], recent: true })) }) + "\n```";
+  }
+  if (/designs multi-city circuits/.test(prompt) || /"stops": \[/.test(prompt)) {
+    const stop = (name, nights, plan, extra = {}) => ({ name, search: name + ", Tamil Nadu", nights, leg: { from: "", mode: "car", hours: 3, depart: "05:00", tip: "Leave early" }, arriveBy: "21:00", why: "Worth it", plan, timings: [{ what: "Morning aarti", time: "around 06:00, confirm locally" }], fees: [{ what: "Special darshan", price: "₹100" }], warnings: ["Pay only at the counter, not to priests"], stay: "Near the temple", food: "Filter coffee", ...extra });
+    return JSON.stringify({ title: "Temples & hills loop", summary: "From Bengaluru through the temple towns and hills of Tamil Nadu.", totalDays: 5,
+      gateway: { name: "Bengaluru", search: "Bengaluru, Karnataka", how: "Fly Agra → Bengaluru, ~2 h 30 min, ₹4,500–7,000" },
+      stops: [stop("Coimbatore", 1, [{ time: "16:00", what: "Isha Yoga Centre, Adiyogi", tip: "Stay for the light show" }]), stop("Palani", 1, [{ time: "05:00", what: "Climb to Palani temple for the first aarti", tip: "Start at 5, beat the crowd" }]), stop("Kodaikanal", 2, [{ time: "07:00", what: "Kodai Lake walk", tip: "" }]), stop("Madurai", 1, [{ time: "21:30", what: "Shayana Aarti at Meenakshi Temple", tip: "Bedtime ceremony, very beautiful" }])],
+      returnLeg: { from: "Madurai", to: "Agra", mode: "flight", hours: 4, fare: "₹6,000–9,000", depart: "", tip: "Via Bengaluru or Delhi" }, cost: { total: 40000, perPerson: 20000, note: "" }, season: "good – pleasant", rating: 9.1 });
   }
   if (/Suggest 6 different trip options/.test(prompt)) {
     return JSON.stringify({ options: [

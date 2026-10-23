@@ -25,7 +25,7 @@ export async function render(view) {
     <div class="cards" style="margin-bottom:28px">
       <a class="card" href="#/plan"><div class="ic">🗺️</div><h3>Plan a trip</h3><p class="mute">Day-by-day plan in the shortest order, around opening times, lunch and your pace.</p></a>
       <a class="card" href="#/plan?here=1"><div class="ic">📍</div><h3>I'm here now</h3><p class="mute">Already at a place? Plan the rest of today from where you are, starting now.</p></a>
-      <a class="card" href="#/explore"><div class="ic">🧭</div><h3>Where can I go?</h3><p class="mute">Tell Raahi your days and budget. Get trip ideas from your home city.</p></a>
+      <a class="card" href="#/explore"><div class="ic">🧭</div><h3>Where can I go?</h3><p class="mute">Your days and budget → trip ideas, or a 🧵 thread: one loop through many places and back home.</p></a>
       <a class="card" href="#/route"><div class="ic">🧵</div><h3>Route optimiser</h3><p class="mute">Paste a Google Maps link or type stops. Get the shortest order.</p></a>
     </div>
     <div class="between"><h2 style="margin:0">Your trips</h2><a class="btn small main" href="#/plan">+ New trip</a></div>

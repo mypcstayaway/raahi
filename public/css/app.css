@@ -264,3 +264,16 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 .recap{background:linear-gradient(160deg,#24343d,#1c2b33);color:#f5f4ef;border-radius:18px;padding:18px 20px;margin-top:16px}
 .recap .big{font-size:26px;font-weight:800;letter-spacing:-.02em}
 .recap small{color:#b9c4c8}
+
+/* Thread trips */
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.thread-line{list-style:none;margin:14px 0 0;padding:0 0 0 34px;position:relative}
+.thread-line:before{content:"";position:absolute;left:14px;top:8px;bottom:8px;border-left:2px dashed var(--thread,#d9480f)}
+.thread-line>li{position:relative;margin:0 0 12px}
+.thread-line>li>.dot{position:absolute;left:-34px;top:12px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--thread,#d9480f);color:#fff;font-weight:700;font-size:13px}
+.thread-line>li.leg{display:flex;gap:10px;align-items:flex-start;padding:4px 0}
+.thread-line>li.leg>.leg-dot{background:var(--card,#fff);border:2px solid var(--line,#ddd);color:inherit;font-size:14px;top:2px}
+.th-plan{margin:6px 0 0;padding-left:20px;font-size:14px}
+.th-plan li{margin:3px 0}
+.thread-card summary,.th-stop summary{cursor:pointer}
+.th-stop{border-top:1px solid var(--line,#e5e5e5);padding:8px 0}

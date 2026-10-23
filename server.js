@@ -16,7 +16,7 @@ const tf = require("./lib/tinyfish");
 const P = require("./lib/prompts");
 const places = require("./lib/places");
 const trips = require("./lib/trips");
-const { explore, advice } = require("./lib/explore");
+const { explore, advice, thread } = require("./lib/explore");
 const { plan: routePlan } = require("./lib/route");
 const { parseGmaps, parsePlace, expand, findUrl, isFullMapsUrl, userErr, MAX } = require("./lib/google");
 
@@ -71,7 +71,7 @@ const ropts = b => ({ fixed: b.fixed !== false, round: !!b.round });
 
 // ---------- API table: "METHOD /path/:param" ----------
 const routes = {
-  "GET /api/config": async () => ({ version: "2026-10-14d", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
+  "GET /api/config": async () => ({ version: "2026-10-23a", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
   "GET /api/me": async ({ user }) => ({ user }),
   "POST /api/auth/register": async ({ req, res, body, user, ip }) => auth.api.register(req, res, body, user, ip),
   "POST /api/auth/login": async ({ req, res, body, user, ip }) => auth.api.login(req, res, body, user, ip),
@@ -250,6 +250,7 @@ const routes = {
 
   // ideas & advice
   "POST /api/explore": async ({ user, body }) => explore(need(user), body),
+  "POST /api/thread": async ({ user, body }) => thread(need(user), body),
   "POST /api/advice": async ({ user, body }) => advice(need(user), body),
 
   // chat
