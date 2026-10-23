@@ -26,8 +26,28 @@ let cleanup = null;
 export async function go(hash) { if (location.hash !== hash) location.hash = hash; else render(); }
 window.addEventListener("hashchange", render);
 
+// Baby mode: one switch for the whole website (saved in the user's preferences).
+function babyUI() {
+  const u = state.user, on = !!(u && u.prefs && u.prefs.baby && u.prefs.baby.on);
+  const b = $("#baby"); if (!b) return;
+  b.hidden = !u; b.setAttribute("aria-pressed", on); b.classList.toggle("on", on);
+  $("#babybar").hidden = !on; document.body.classList.toggle("baby", on);
+}
+async function setBaby(on) {
+  try {
+    const r = await api("/api/me", { prefs: { baby: { on, months: (state.user.prefs.baby || {}).months || null } } }, { method: "PUT" });
+    setUser(r.user);
+    toast(on ? "👶 Baby mode on: every plan, idea and loop now puts the baby first" : "Baby mode off");
+  } catch (e) { toast(e.message, true); }
+}
+document.addEventListener("click", e => {
+  if (e.target.closest("#baby")) setBaby(!(state.user.prefs.baby && state.user.prefs.baby.on));
+  if (e.target.closest("#babyOff")) { e.preventDefault(); setBaby(false); }
+});
+
 export function setUser(u) {
   state.user = u;
+  setTimeout(babyUI, 0);
   const me = $("#me");
   if (u && !u.guest) { me.href = "#/profile"; me.innerHTML = u.picture ? `<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">` : esc(initials(u)); me.title = u.name || "Account"; }
   else if (u && u.guest) { me.href = "#/profile"; me.textContent = "👤"; me.title = "Guest – tap to save your account"; }

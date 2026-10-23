@@ -243,6 +243,21 @@ try {
     if (!/^5 days/.test(title)) throw new Error("thread trip length changed: " + title);
     await shot(p, "17c-thread-trip");
   });
+  await step("plan a trip → 'Coimbatore' → make it a thread (auto-runs)", async () => {
+    await p.goto(BASE + "/#/plan");
+    await p.waitForSelector("text=Where are you going?");
+    await p.fill("#segs input", "Coimbatore"); await p.waitForSelector(".sug li"); await p.click(".sug li");
+    await p.click("#thLink");
+    await p.waitForSelector(".thread-line", { timeout: 10000 });
+    const lbl = await p.textContent("#homeLbl");
+    if (!/base/.test(lbl)) throw new Error("not in around-one-place mode: " + lbl);
+    // Baby mode: one switch for the whole site
+    await p.click("#baby");
+    await p.waitForSelector("#babybar:not([hidden])");
+    await shot(p, "17d-baby-mode");
+    await p.click("#babyOff");
+    await p.waitForSelector("#babybar", { state: "hidden" });
+  });
   await step("route optimiser: share link + typed stops (spinner clears)", async () => {
     await p.goto(BASE + "/#/route");
     await p.waitForSelector("text=Route optimiser");
@@ -341,7 +356,8 @@ try {
     for (const v of visits.slice(1)) await c.evaluate(async ([id, pid]) => fetch(`/api/trips/${id}/checkin`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ placeId: pid, state: "done" }) }), [id, v.id]);
     await c.reload();
     await c.waitForSelector("text=RECAP");
-    await c.waitForSelector(".nextstep:has-text(\"That's a wrap\")");
+    // All stops done: "That's a wrap", or lunch first if the test runs at lunchtime.
+    await c.waitForSelector(".nextstep:has-text(\"That's a wrap\"), .nextstep:has-text(\"Time for lunch\")");
     await shot(c, "30-recap");
     // Full-screen next step
     await c.goto(BASE + "/#/now");

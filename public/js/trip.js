@@ -364,6 +364,7 @@ export async function render(view, params, query, { shared } = {}) {
           ${verifiedBox(it.id)}
           ${p.hoursNote ? `<div class="help">${esc(p.hoursNote)}</div>` : ""}
           ${pu ? pulseBox(pu) : ""}
+          ${p.babyNote ? `<div class="note" style="margin-top:6px">👶 ${esc(p.babyNote)}</div>` : ""}
           ${(p.highlights && p.highlights.length) || p.tips ? `<details><summary>Highlights & tips</summary>${p.highlights && p.highlights.length ? `<ul style="margin:6px 0;padding-left:18px">${p.highlights.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}${p.tips ? `<p style="margin:4px 0">💡 ${esc(p.tips)}</p>` : ""}${p.website ? `<a href="${esc(p.website)}" target="_blank" rel="noopener">Official website</a>` : ""}</details>` : ""}`}
           <div class="acts no-print">
             <a class="btn small ghost" href="${esc(gmapsGo(p.lat, p.lng, p.approx ? `${p.lat},${p.lng}` : `${p.name}, ${city(p.seg)}`))}" target="_blank" rel="noopener">Navigate</a>

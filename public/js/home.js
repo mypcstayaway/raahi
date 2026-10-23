@@ -26,7 +26,9 @@ export async function render(view) {
       <a class="card" href="#/plan"><div class="ic">🗺️</div><h3>Plan a trip</h3><p class="mute">Day-by-day plan in the shortest order, around opening times, lunch and your pace.</p></a>
       <a class="card" href="#/plan?here=1"><div class="ic">📍</div><h3>I'm here now</h3><p class="mute">Already at a place? Plan the rest of today from where you are, starting now.</p></a>
       <a class="card" href="#/explore"><div class="ic">🧭</div><h3>Where can I go?</h3><p class="mute">Your days and budget → trip ideas, or a 🧵 thread: one loop through many places and back home.</p></a>
-      <a class="card" href="#/route"><div class="ic">🧵</div><h3>Route optimiser</h3><p class="mute">Paste a Google Maps link or type stops. Get the shortest order.</p></a>
+      <a class="card" href="#/explore?mode=around"><div class="ic">🗺️</div><h3>Around one place</h3><p class="mute">"Going to Coimbatore for 6 days." 1 day there, then Palani, Kodaikanal and more, one after another.</p></a>
+      <a class="card" href="#/explore?mode=thread"><div class="ic">🧵</div><h3>Thread trip</h3><p class="mute">"9 days from Agra, include Coimbatore." One loop through many places, every leg and tip, back home.</p></a>
+      <a class="card" href="#/route"><div class="ic">📍</div><h3>Route optimiser</h3><p class="mute">Paste a Google Maps link or type stops. Get the shortest order.</p></a>
     </div>
     <div class="between"><h2 style="margin:0">Your trips</h2><a class="btn small main" href="#/plan">+ New trip</a></div>
     <div id="trips" class="list" style="margin-top:12px"><div class="skeleton" style="height:70px"></div></div>

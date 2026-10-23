@@ -11,7 +11,7 @@ export async function api(path, body, { method, signal } = {}) {
     r = await fetch(path, { method: method || (body ? "POST" : "GET"), headers: body ? { "Content-Type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined, signal, credentials: "same-origin" });
   } catch (e) {
     if (e.name === "AbortError") throw e;
-    throw new Error(location.protocol === "file:" ? "Raahi needs its server. In the Raahi folder run:  node server.js  then open http://localhost:3000" : navigator.onLine === false ? "You're offline. Showing what was saved on this device." : "Can't reach the Raahi server. Is it still running?");
+    throw new Error(location.protocol === "file:" ? "Raahi needs its server. In the Raahi folder run:  node server.js  then open http://localhost:3000" : navigator.onLine === false ? "You're offline. Showing what was saved on this device." : "Raahi couldn't be reached just now. Check your internet and try again in a moment.");
   }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { const e = new Error(j.error || "Something went wrong. Try again."); e.status = r.status; e.code = j.code; throw e; }

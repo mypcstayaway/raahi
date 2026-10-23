@@ -24,10 +24,10 @@ export async function render(view, params, query) {
   if (w.hereNow) { w.dates = "fixed"; w.start = todayISO(); w.segments[0].days = 1; w.detail = "quick"; }
 
   const steps = [
-    { id: "where", q: w.hereNow ? "Where are you right now?" : "Where are you going?", draw: drawWhere, ok: () => w.segments.every(s => s.destination && s.destination.label) || "Pick a place for each city." },
+    { id: "where", q: w.hereNow ? "Where are you right now?" : "Where are you going?", draw: drawWhere, ok: () => (w.segments.every(s => s.destination && s.destination.label) ? farHere() || true : "Pick a place for each city.") },
     { id: "when", q: "When is the trip?", skip: () => w.hereNow, draw: drawWhen, ok: () => w.dates !== "fixed" || /^\d{4}-\d{2}-\d{2}$/.test(w.start) || "Pick a start date, or choose “Not decided”." },
     { id: "long", q: w.hereNow ? "How many days are you there?" : "How many days?", draw: drawLong, ok: () => true },
-    { id: "stay", q: "Where are you staying?", draw: drawStay, ok: () => true },
+    { id: "stay", q: "Where are you staying?", draw: drawStay, ok: () => farStay() || true },
     { id: "times", q: "Your daily timings", draw: drawTimes, ok: () => true },
     { id: "pace", q: "What pace for this trip?", draw: drawPace, ok: () => true },
     { id: "likes", q: "What should the plan include?", draw: drawLikes, ok: () => true },
@@ -58,7 +58,7 @@ export async function render(view, params, query) {
     };
     if ($("#rest")) $("#rest").onclick = async e => {
       const ok = steps[0].ok();
-      if (ok !== true) { $("#werr").textContent = "First tell Raahi where (or tap “Let Raahi decide” for the place too)."; return; }
+      if (ok !== true) { $("#werr").textContent = ok === "Pick a place for each city." ? "First tell Raahi where (or tap “Let Raahi decide” for the place too)." : ok; return; }
       busy(e.currentTarget, true, "Raahi is deciding…");
       try {
         if (!w.hereNow && !w.start && w.dates !== "later" && i <= 1) {
@@ -82,8 +82,10 @@ export async function render(view, params, query) {
       ${w.hereNow ? "" : `<div class="row"><button class="btn ghost small" id="addSeg" type="button">+ Add another city</button><button class="btn small decide" id="pickDest" type="button">✨ Not sure where? Let Raahi decide</button></div><div id="destMsg"></div>`}
       <hr>
       <label class="row" style="gap:10px;cursor:pointer"><input type="checkbox" id="hn" ${w.hereNow ? "checked" : ""} style="width:20px;height:20px;accent-color:var(--thread)"> <span><b>I'm already there</b><br><small>Start the plan now, from my current location</small></span></label>
-      <div id="hereMsg" class="help"></div>`;
+      <div id="hereMsg" class="help"></div>
+      ${w.hereNow ? "" : `<p class="help" style="margin-top:12px">🗺️ Want to see many places around your destination, one after another? <a href="#/explore?mode=around" id="thLink">Go around it</a></p>`}`;
     const segs = $("#segs", box);
+    if ($("#thLink", box)) $("#thLink", box).onclick = e => { e.preventDefault(); location.hash = threadLink(); };
     w.segments.forEach((seg, k) => {
       const row = document.createElement("div");
       row.className = "seg-row";
@@ -166,6 +168,34 @@ export async function render(view, params, query) {
     body(t.get());
   }
 
+  // Places that don't belong together get a clear message before planning.
+  const kmBetween = (a, b) => { const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r; const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2; return Math.round(12742 * Math.asin(Math.sqrt(h))); };
+  const hasPt = x => x && x.lat != null && x.lng != null && isFinite(+x.lat);
+  const short = x => String(x.label || "").split(",")[0];
+  function farStay() {
+    for (const s of w.segments) if (hasPt(s.stay) && hasPt(s.destination) && kmBetween(s.stay, s.destination) > 60)
+      return `Your stay "${short(s.stay)}" is about ${kmBetween(s.stay, s.destination)} km from ${short(s.destination)}. Pick a hotel in or near ${short(s.destination)}, or tap "Let Raahi decide".`;
+    return "";
+  }
+  function farHere() {
+    const d = w.segments[0] && w.segments[0].destination;
+    if (w.hereNow && hasPt(w.here) && hasPt(d) && kmBetween(w.here, d) > 60) return `You're about ${kmBetween(w.here, d)} km from ${short(d)} right now. Pick the place you're in today, or untick "I'm already there" to plan a normal trip.`;
+    return "";
+  }
+
+  // Many days in one place? Offer a thread: that place plus others around it, in one loop back home.
+  function threadLink() {
+    const s0 = w.segments[0], city = s0 && s0.destination ? s0.destination.label.split(",")[0] : "";
+    const days = w.segments.reduce((a, s) => a + s.days, 0);
+    return city ? `#/explore?mode=around&days=${Math.max(3, days)}&base=${encodeURIComponent(s0.destination.label)}` : `#/explore?mode=thread&days=${Math.max(3, days)}`;
+  }
+  function threadHint() {
+    if (w.hereNow || w.segments.length !== 1 || !w.segments[0].destination) return "";
+    const days = w.segments[0].days, city = w.segments[0].destination.label.split(",")[0];
+    if (days < 4) return "";
+    return `<div class="note" style="margin-top:12px">🧵 <b>${days} days in ${esc(city)} is a lot of one place.</b> See more: 1 day in ${esc(city)}, then the best places around it, one after another. <a class="btn small main" href="${threadLink()}" style="margin-top:8px">Make it a thread →</a></div>`;
+  }
+
   function drawLong(box) {
     box.innerHTML = `<div id="lens"></div><div style="margin-top:12px" class="row"><button class="btn small decide" id="askLen" type="button">✨ Let Raahi decide how many days</button></div><div id="adv"></div>`;
     const lens = $("#lens", box);
@@ -173,7 +203,8 @@ export async function render(view, params, query) {
       lens.innerHTML = w.segments.map((s, k) => `
         <div class="between" style="margin-bottom:10px"><b>${esc(s.destination ? s.destination.label.split(",")[0] : "City " + (k + 1))}</b>
           <div class="stepper" style="width:150px"><button type="button" data-k="${k}" data-d="-1" aria-label="Fewer days">−</button><input type="number" min="1" max="15" value="${s.days}" data-k="${k}" aria-label="Days"><button type="button" data-k="${k}" data-d="1" aria-label="More days">+</button></div></div>`).join("") +
-        `<p class="mute" style="margin:0">Total: ${w.segments.reduce((a, s) => a + s.days, 0)} days${w.start ? ` · ${longDate(w.start)} onwards` : ""}</p>`;
+        `<p class="mute" style="margin:0">Total: ${w.segments.reduce((a, s) => a + s.days, 0)} days${w.start ? ` · ${longDate(w.start)} onwards` : ""}</p>` +
+        (threadHint() || "");
       $$("button[data-d]", lens).forEach(b => (b.onclick = () => { const s = w.segments[+b.dataset.k]; s.days = Math.max(1, Math.min(15, s.days + +b.dataset.d)); draw(); }));
       $$("input", lens).forEach(inp => (inp.onchange = () => { w.segments[+inp.dataset.k].days = Math.max(1, Math.min(15, Math.round(+inp.value) || 1)); draw(); }));
     };

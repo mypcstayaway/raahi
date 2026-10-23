@@ -414,6 +414,35 @@ test("thread trip: a loop through several places, then a full plan", async () =>
   assert.match(data.days[4].note, /Head home/);
 });
 
+test("baby mode: shorter days, at most 3 stops, no risky places", async () => {
+  await call("PUT", "/api/me", { prefs: { baby: { on: true, months: 10 } } });
+  const c = await call("POST", "/api/trips", { segments: [{ destination: { label: "Agra", lat: 27.1767, lng: 78.0081 }, days: 2, stay: { label: "Hotel" } }], start: "2026-12-01", detail: "quick" });
+  assert.strictEqual(c.status, 200, JSON.stringify(c.data));
+  const d = (await waitTrip(c.data.id)).data;
+  assert.strictEqual(d.status, "ready", d.error);
+  assert.ok(d.input.baby && d.input.baby.on, "trip remembers baby mode");
+  assert.ok(d.pace.baby && d.pace.maxStops <= 3);
+  for (const day of d.days) {
+    assert.ok(day.items.filter(i => i.type === "visit").length <= 3);
+    assert.ok(day.start >= 9 * 60 + 30 && day.end <= 18 * 60);
+  }
+  assert.ok(Object.values(d.places).every(p => p.category !== "adventure"));
+  const t = await call("POST", "/api/thread", { home: { label: "Coimbatore", lat: 11.0168, lng: 76.9558 }, days: 5, around: true });
+  assert.strictEqual(t.status, 200, JSON.stringify(t.data));
+  assert.strictEqual(t.data.thread.around, true);
+  assert.strictEqual(t.data.thread.gateway, null, "around mode has no gateway");
+  await call("PUT", "/api/me", { prefs: { baby: { on: false } } });
+});
+
+test("clear message when the hotel or 'here now' is far from the destination", async () => {
+  const far = await call("POST", "/api/trips", { segments: [{ destination: { label: "Bengaluru", lat: 12.9716, lng: 77.5946 }, days: 1, stay: { label: "Hotel, Coimbatore", lat: 11.0168, lng: 76.9558 } }], start: "2026-12-01" });
+  assert.strictEqual(far.status, 400);
+  assert.match(far.data.error, /Your stay "Hotel" is about \d+ km from Bengaluru/);
+  const here = await call("POST", "/api/trips", { segments: [{ destination: { label: "Bengaluru", lat: 12.9716, lng: 77.5946 }, days: 1 }], hereNow: true, here: { lat: 11.0168, lng: 76.9558 }, nowMin: 600, start: "2026-12-01" });
+  assert.strictEqual(here.status, 400);
+  assert.match(here.data.error, /You're about \d+ km from Bengaluru right now/);
+});
+
 test("static pages and SPA paths", async () => {
   for (const p of ["/", "/route", "/t/abc"]) assert.strictEqual((await fetch(base + p)).status, 200);
   assert.strictEqual((await fetch(base + "/../server.js")).status, 404);

@@ -2,17 +2,18 @@
 import { $, $$, api, state, esc, toast, busy, tiles, placeSearch, INTERESTS, todayISO, inr, dur, scoreClass } from "./core.js";
 import * as chat from "./chat.js";
 
-export async function render(view) {
+export async function render(view, params, query) {
+  query = query || new URLSearchParams();
   const p = state.user.prefs || {};
   const f = { days: 4, travellers: 2, budget: "", per: "total", scope: "india", transport: "", start: "", month: "", interests: p.interests || [] };
   view.innerHTML = `
     <div class="wiz" style="max-width:860px">
       <h1>Where can I go?</h1>
       <p class="mute">Tell Raahi where you start, how many days you have and your budget. Get trip ideas, or a <b>thread</b>: one loop through many places and back home.</p>
-      <div class="chips" id="mode" style="margin-bottom:12px"><button type="button" class="chip" data-v="ideas">💡 Trip ideas</button><button type="button" class="chip" data-v="thread">🧵 Thread trip: many places, one loop</button></div>
+      <div class="chips" id="mode" style="margin-bottom:12px"><button type="button" class="chip" data-v="ideas">💡 Trip ideas</button><button type="button" class="chip" data-v="thread">🧵 Thread trip: many places, one loop</button><button type="button" class="chip" data-v="around">🗺️ Around one place</button></div>
       <div class="card">
         <div class="row" style="align-items:flex-start;gap:16px">
-          <div class="grow" style="min-width:220px"><label class="f" style="margin-top:0">Starting from</label><div id="home"></div></div>
+          <div class="grow" style="min-width:220px"><label class="f" style="margin-top:0" id="homeLbl">Starting from</label><div id="home"></div></div>
           <div><label class="f" style="margin-top:0">Days</label><div class="stepper" style="width:140px"><button type="button" data-d="-1" aria-label="Fewer">−</button><input id="dy" type="number" min="1" max="30" value="${f.days}" aria-label="Days"><button type="button" data-d="1" aria-label="More">+</button></div></div>
           <div><label class="f" style="margin-top:0">People</label><input id="tv" type="number" min="1" max="50" value="${f.travellers}" style="width:90px"></div>
         </div>
@@ -42,15 +43,31 @@ export async function render(view) {
   $("#home").appendChild(home.el);
   const sc = tiles($("#sc"), { value: f.scope }), tr = tiles($("#tr"), { value: "" }), int = tiles($("#in"), { multi: true, value: f.interests });
   const dy = $("#dy");
-  let mode = "ideas", variant = 0;
-  const md = tiles($("#mode"), { value: mode, onChange: v => { mode = v; $("#thf").hidden = v !== "thread"; $("#go").textContent = v === "thread" ? "Make my thread 🧵" : "Show me trip ideas ✨"; if (v === "thread" && +dy.value < 4) dy.value = 7; } });
+  let mode = ["thread", "around"].includes(query.get("mode")) ? query.get("mode") : "ideas", variant = 0;
+  const setMode = v => {
+    mode = v; const loopy = v !== "ideas";
+    $("#thf").hidden = !loopy;
+    $("#rg").closest(".grow").hidden = v === "around";
+    $("#homeLbl").textContent = v === "around" ? "The place you're going to (your base)" : "Starting from";
+    $("#lp").nextElementSibling.textContent = v === "around" ? "Come back to this place at the end" : "Come back home at the end";
+    $("#go").textContent = v === "thread" ? "Make my thread 🧵" : v === "around" ? "Show me the places around 🗺️" : "Show me trip ideas ✨";
+    if (loopy && +dy.value < 4) dy.value = 6;
+  };
+  tiles($("#mode"), { value: mode, onChange: setMode });
+  // Arriving from "Plan a trip" ("9 days in Coimbatore? Make it a thread"): fill in and start straight away.
+  if (query.get("days")) dy.value = Math.max(1, Math.min(30, +query.get("days") || 7));
+  if (query.get("include")) $("#inc").value = query.get("include");
+  if (query.get("region")) $("#rg").value = query.get("region");
+  if (query.get("base")) home.set({ label: query.get("base") });
+  setMode(mode);
+  if (((mode === "thread" && query.get("include")) || (mode === "around" && query.get("base"))) && home.get() && home.get().label) setTimeout(() => $("#go").click(), 50);
   $$("button[data-d]").forEach(b => (b.onclick = () => (dy.value = Math.max(1, Math.min(30, (+dy.value || 1) + +b.dataset.d)))));
   $("#go").onclick = async e => {
     $("#err").textContent = "";
     const h = home.get();
-    if (!h || !h.label) { $("#err").textContent = "Tell me where you're starting from."; return; }
+    if (!h || !h.label) { $("#err").textContent = mode === "around" ? "Tell me the place you're going to." : "Tell me where you're starting from."; return; }
     const body = { home: h, days: +dy.value, travellers: +$("#tv").value || 1, budget: +$("#bg").value || null, per: $("#per").value, start: $("#sd").value || null, scope: sc.get(), transport: tr.get(), interests: int.get(), pace: p.pace, diet: p.diet };
-    if (mode === "thread") return makeThread(e.currentTarget, body);
+    if (mode !== "ideas") return makeThread(e.currentTarget, body);
     busy(e.currentTarget, true, "Finding ideas… (about 15 s)");
     $("#out").innerHTML = `<div class="cards">${[1, 2, 3].map(() => `<div class="skeleton" style="height:220px"></div>`).join("")}</div>`;
     try { show(await api("/api/explore", body), body); } catch (err) { $("#out").innerHTML = ""; $("#err").textContent = err.message; }
@@ -58,7 +75,7 @@ export async function render(view) {
   };
 
   async function makeThread(btn, body) {
-    Object.assign(body, { region: $("#rg").value.trim(), include: $("#inc").value.trim(), loop: $("#lp").checked, flexible: $("#fx").checked, variant });
+    Object.assign(body, { region: mode === "around" ? "" : $("#rg").value.trim(), include: $("#inc").value.trim(), loop: $("#lp").checked, flexible: $("#fx").checked, variant, around: mode === "around" });
     busy(btn, true, "Designing your loop… (about 15 s)");
     $("#out").innerHTML = `<div class="skeleton" style="height:420px"></div>`;
     try { showThread(await api("/api/thread", body), body); } catch (err) { $("#out").innerHTML = ""; $("#err").textContent = err.message; }

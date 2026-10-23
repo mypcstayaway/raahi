@@ -277,3 +277,10 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 .th-plan li{margin:3px 0}
 .thread-card summary,.th-stop summary{cursor:pointer}
 .th-stop{border-top:1px solid var(--line,#e5e5e5);padding:8px 0}
+
+/* Baby mode */
+.babybtn{border:1px solid var(--line,#ddd);background:transparent;color:inherit;border-radius:99px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;margin-right:8px;white-space:nowrap}
+.babybtn.on{background:#fde7ef;border-color:#e46a96;color:#9c1d4f;font-weight:700}
+.babybar{background:#fde7ef;color:#7a1640;padding:8px 16px;font-size:14px;text-align:center}
+.babybar a{color:#9c1d4f;font-weight:700;margin-left:6px}
+@media (max-width:640px){.babybtn span{display:none}}
