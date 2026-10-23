@@ -112,7 +112,9 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 .btn.decide{border-style:dashed;border-color:var(--saffron)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:8px 13px;border-radius:99px;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;font-weight:600;font-size:14px;min-height:38px}
-.chip[aria-pressed=true]{border-color:var(--thread);background:var(--thread);color:#fff}
+/* Picked options are a light tint with a tick, so the solid button is the only thing that looks like "go" */
+.chip[aria-pressed=true]{border-color:var(--thread);background:color-mix(in srgb,var(--thread) 14%,var(--paper));color:var(--ink)}
+.chip[aria-pressed=true]::before{content:"✓ ";color:var(--thread);font-weight:800}
 
 /* wizard */
 .wiz{max-width:720px;margin:0 auto}
@@ -300,3 +302,13 @@ body.baby{--bg:#fff0f6;--paper:#fffafd;--soft:#fde2ee;--line:#f4c4d9;--thread:#d
 .trip-del{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:1px solid var(--line,#ddd);background:var(--card,#fff);color:inherit;border-radius:99px;min-width:40px;height:36px;padding:0 10px;font:inherit;font-size:14px;cursor:pointer}
 .trip-del.armed{background:var(--bad,#c53030);border-color:var(--bad,#c53030);color:#fff;font-weight:700}
 .babycard.on{border-color:var(--thread)}
+
+/* The main action on every form: big, solid, and always in reach at the bottom of the screen */
+.btn.main.big{min-height:52px;padding:12px 26px;font-size:16px;font-weight:700;border-radius:12px;box-shadow:0 4px 14px color-mix(in srgb,var(--thread) 35%,transparent)}
+.btn.main.big:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.actionbar{position:sticky;bottom:0;z-index:600;display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px;padding:12px 0;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(6px);border-top:1px solid var(--line)}
+.card .actionbar{margin:18px -18px -18px;padding:14px 18px;background:color-mix(in srgb,var(--paper) 94%,transparent);border-radius:0 0 var(--r) var(--r)}
+.wiz-nav{position:sticky;bottom:0;z-index:600;background:color-mix(in srgb,var(--paper) 94%,transparent);backdrop-filter:blur(6px);padding:12px 0;border-top:1px solid var(--line)}
+/* "Ask Raahi" stays handy but quiet, and moves up when a form's main button is on screen */
+.fab{background:var(--paper);color:var(--ink);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.18);padding:10px 16px;font-weight:600}
+body:has(.actionbar) .fab,body:has(.wiz-nav) .fab{bottom:96px}

@@ -85,7 +85,7 @@ export const welcome = {
         <p class="mute">A few quick questions so every plan fits you. It takes 30 seconds, and you can change it later.</p>
         ${!state.user.name ? `<label class="f" for="nm">What should we call you?</label><input id="nm" type="text" placeholder="Your name" style="max-width:320px">` : ""}
         <div class="card" style="display:grid;gap:26px;margin-top:18px">${prefForm(p)}</div>
-        <div class="wiz-nav"><button class="btn ghost decide" id="skip">✨ Let Raahi decide for me</button><button class="btn main" id="save">Save and continue →</button></div>
+        <div class="wiz-nav"><button class="btn ghost decide" id="skip">✨ Let Raahi decide for me</button><button class="btn main big" id="save">Save and continue →</button></div>
       </div>`;
     $$(".q", view).forEach(q => (q.style.fontSize = "20px"));
     const get = wirePrefs(view, p);

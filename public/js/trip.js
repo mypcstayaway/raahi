@@ -66,7 +66,7 @@ export async function render(view, params, query, { shared } = {}) {
       <div class="card no-print" style="position:sticky;bottom:72px;margin-top:16px;z-index:10">
         <div id="cmpBar" hidden class="between" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)"><span><b id="cmpN"></b> marked to compare. Keep <select id="cmpK" style="width:auto;min-height:32px;padding:2px 6px"></select></span><button class="btn small decide" id="cmpGo">✨ Let Raahi pick</button></div>
         <div id="cmpOut"></div>
-        <div class="between"><span id="cnt" class="mute"></span><div class="row"><button class="btn ghost decide" id="auto" title="Use Raahi's picks">✨ Let Raahi decide</button><button class="btn main" id="go">Make my day-by-day plan →</button></div></div></div>`;
+        <div class="between"><span id="cnt" class="mute"></span><div class="row"><button class="btn ghost decide" id="auto" title="Use Raahi's picks">✨ Let Raahi decide</button><button class="btn main big" id="go">Make my day-by-day plan →</button></div></div></div>`;
     const box = $("#segs");
     segs.forEach((s, si) => {
       const list = Object.values(d.places).filter(p => p.seg === si).sort((a, b) => (b.selected - a.selected) || b.priority - a.priority || (b.rating || 0) - (a.rating || 0));

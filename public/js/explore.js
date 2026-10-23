@@ -34,7 +34,7 @@ export async function render(view, params, query) {
         <label class="f">Where</label><div class="chips" id="sc"><button type="button" class="chip" data-v="india">🇮🇳 Within India</button><button type="button" class="chip" data-v="abroad">✈️ Abroad</button><button type="button" class="chip" data-v="any">🌏 Either</button></div>
         <label class="f">Getting there</label><div class="chips" id="tr"><button type="button" class="chip" data-v="">Any</button><button type="button" class="chip" data-v="own car / road trip">🚗 Road trip</button><button type="button" class="chip" data-v="train">🚆 Train</button><button type="button" class="chip" data-v="flight">✈️ Flight</button><button type="button" class="chip" data-v="bus">🚌 Bus</button></div>
         <label class="f">You like</label><div class="chips" id="in">${INTERESTS.map(([v, t]) => `<button type="button" class="chip" data-v="${v}">${t}</button>`).join("")}</div>
-        <div class="row" style="margin-top:18px"><button class="btn main" id="go">Show me trip ideas ✨</button></div>
+        <div class="actionbar"><button class="btn main big" id="go">Show me trip ideas ✨</button></div>
         <div class="err" id="err" role="alert"></div>
       </div>
       <div id="out" style="margin-top:20px"></div>
@@ -117,7 +117,7 @@ export async function render(view, params, query) {
       </div>
       ${t.gateway ? `<div class="card" style="margin-top:12px"><b>✈️ First, reach ${esc(t.gateway.name)}</b><p class="help" style="margin:4px 0 0">${esc(t.gateway.how)}</p></div>` : ""}
       <ol class="thread-line">${t.stops.map(stopHTML).join("")}${t.returnLeg ? legHTML(t.returnLeg, t.stops[t.stops.length - 1].name, t.returnLeg.to || homeName) : ""}</ol>
-      <div class="row" style="margin-top:14px"><button class="btn main" id="planT">Plan this thread, day by day →</button><button class="btn ghost" id="moreT">Show me another loop</button><button class="btn ghost" id="askT">Ask about it</button></div>
+      <div class="actionbar"><button class="btn main big" id="planT">Plan this thread, day by day →</button><button class="btn ghost" id="moreT">Show me another loop</button><button class="btn ghost" id="askT">Ask about it</button></div>
       ${r.sources && r.sources.length ? `<p class="help">Sources: ${r.sources.slice(0, 6).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`).join(", ")}</p>` : ""}`;
     if ($("#reord")) $("#reord").onclick = () => {
       const order = t.betterOrder.names.map(n => t.stops.find(x => x.name === n)).filter(Boolean);

@@ -22,7 +22,7 @@ export async function render(view) {
           <div class="row"><button class="btn small ghost" id="add">+ Add stop</button><span class="mute" id="cnt" style="font-size:13px"></span><button class="btn link" id="clr">Clear all</button></div>
           <label class="row" style="gap:8px;margin-top:12px;color:var(--mute)"><input type="checkbox" id="fixed" checked style="accent-color:var(--thread)"> Start at stop A (otherwise any stop can be the start)</label>
           <label class="row" style="gap:8px;margin-top:6px;color:var(--mute)"><input type="checkbox" id="round" style="accent-color:var(--thread)"> Come back to the start</label>
-          <div class="row" style="margin-top:14px"><button class="btn main" id="go">Find shortest route</button></div>
+          <div class="actionbar"><button class="btn main big" id="go">Find shortest route →</button></div>
           <div class="err" id="err" role="alert"></div>
         </div>
         <div id="out" style="margin-top:16px" aria-live="polite"></div>

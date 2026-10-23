@@ -71,7 +71,7 @@ const ropts = b => ({ fixed: b.fixed !== false, round: !!b.round });
 
 // ---------- API table: "METHOD /path/:param" ----------
 const routes = {
-  "GET /api/config": async () => ({ version: "2026-10-23f", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
+  "GET /api/config": async () => ({ version: "2026-10-23g", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
   "GET /api/me": async ({ user }) => ({ user }),
   "POST /api/auth/register": async ({ req, res, body, user, ip }) => auth.api.register(req, res, body, user, ip),
   "POST /api/auth/login": async ({ req, res, body, user, ip }) => auth.api.login(req, res, body, user, ip),

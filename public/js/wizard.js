@@ -46,7 +46,7 @@ export async function render(view, params, query) {
         <div class="q">${esc(s.q)}</div>
         <div class="card" id="box" style="margin-top:12px"></div>
         <div class="err" id="werr" role="alert"></div>
-        <div class="wiz-nav"><button class="btn ghost" id="back" ${i === 0 ? "style=visibility:hidden" : ""}>← Back</button><div class="row">${i < vs.length - 1 ? `<button class="btn ghost decide" id="rest" title="Skip the remaining questions">✨ Let Raahi decide the rest</button>` : ""}<button class="btn main" id="next">${i === vs.length - 1 ? "Make my plan ✨" : "Next →"}</button></div></div>
+        <div class="wiz-nav"><button class="btn ghost" id="back" ${i === 0 ? "style=visibility:hidden" : ""}>← Back</button><div class="row">${i < vs.length - 1 ? `<button class="btn ghost decide" id="rest" title="Skip the remaining questions">✨ Let Raahi decide the rest</button>` : ""}<button class="btn main big" id="next">${i === vs.length - 1 ? "Make my plan ✨" : "Next →"}</button></div></div>
       </div>`;
     s.draw($("#box"));
     $("#back").onclick = () => { i--; show(); };
