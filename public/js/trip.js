@@ -28,6 +28,29 @@ export async function render(view, params, query, { shared } = {}) {
   const P = pid => D().places[pid] || { name: "?" };
   const city = si => ((D().input.segments[si] || D().input.segments[0]).destination.label || "").split(",")[0];
 
+  // Baby mode: show what it changed, and offer to re-plan a trip made before it was switched on (or off).
+  function babyBox(inp) {
+    if (shared) return inp.baby ? `<div class="note baby-note" style="margin-bottom:12px">👶 Planned for travelling with a baby.</div>` : "";
+    const want = !!(state.user && state.user.prefs && state.user.prefs.baby && state.user.prefs.baby.on), has = !!inp.baby;
+    const ch = D().babyChange;
+    if (want && !has) return `<div class="note baby-note no-print" style="margin-bottom:12px"><b>👶 Baby mode is on, but this trip was planned without it.</b> Re-plan it for your baby: fewer stops, a nap break, risky places left out, baby tips at every stop.<div class="row" style="margin-top:8px"><button class="btn main" id="babyRe" data-auto="1">👶 Re-plan this trip for my baby</button></div></div>`;
+    if (!want && has) return `<div class="note no-print" style="margin-bottom:12px">This trip was planned for a baby, but baby mode is now off.<div class="row" style="margin-top:8px"><button class="btn" id="babyRe" data-auto="1">Re-plan without baby mode</button></div></div>`;
+    if (has) return `<div class="note baby-note" style="margin-bottom:12px"><b>👶 Planned for your baby:</b> up to 3 stops a day · 9:30 am to 6 pm · 2-hour lunch &amp; nap break · risky places left out · a parent's tip at every stop${ch && ch.hidden ? ` · ${ch.hidden} risky place${ch.hidden > 1 ? "s" : ""} removed` : ""}.</div>`;
+    return "";
+  }
+  function wireBaby() {
+    const b = $("#babyRe"); if (!b) return;
+    b.onclick = async () => {
+      const on = !!(state.user.prefs.baby && state.user.prefs.baby.on);
+      busy(b, true, on ? "Re-planning for your baby…" : "Re-planning…");
+      try { t = await api(`/api/trips/${id}/replan`, { baby: on ? { on: true, months: state.user.prefs.baby.months || null } : { on: false } }); toast(on ? "👶 Re-planned for your baby" : "Re-planned without baby mode"); route(); }
+      catch (e) { toast(e.message, true); busy(b, false); }
+    };
+    // Trips follow the baby switch by themselves: re-plan as soon as the trip is opened (once per visit).
+    if (b.dataset.auto && !babyTried) { babyTried = true; b.onclick(); }
+  }
+  let babyTried = false;
+
   function route() {
     const d = D();
     if (d.status === "planning" || t.planning) return planning();
@@ -175,6 +198,7 @@ export async function render(view, params, query, { shared } = {}) {
       <div id="sosBox" class="no-print" hidden style="margin-bottom:14px"></div>
       <div id="shareBox" class="card no-print" hidden style="margin-bottom:14px"></div>
       <div id="moreBox" class="card no-print" hidden style="margin-bottom:14px"></div>
+      ${babyBox(inp)}
       <div id="nsBox" class="no-print"></div><div id="alertBox" class="no-print"></div>
       ${inp.thread ? threadCard(inp) : ""}
       ${d.aiError ? `<div class="note warn no-print" style="margin-bottom:10px">AI details weren't available (${esc(d.aiError)}). Places come from OpenStreetMap; ticket prices and tips are missing.</div>` : ""}
@@ -184,6 +208,7 @@ export async function render(view, params, query, { shared } = {}) {
       </div>
       <div class="split"><div id="tb"></div><div class="mapbox no-print"><div class="map" id="map"></div></div></div>
       <div class="print-only" id="printArea"></div>`;
+    wireBaby();
     $$("[data-tab]").forEach(b => (b.onclick = () => { tab = b.dataset.tab; $$("[data-tab]").forEach(x => x.setAttribute("aria-selected", x === b)); drawTab(); }));
     $("#print").onclick = () => { $("#printArea").innerHTML = printHTML(); window.print(); };
     if (!shared) {
@@ -339,7 +364,7 @@ export async function render(view, params, query, { shared } = {}) {
     for (const it of items) {
       if (it.type === "meal") {
         const m = x.meals && x.meals.lunch || [];
-        h += `<li><span class="dot meal">🍽️</span><div class="stop"><div class="card" style="padding:12px 14px"><div class="time">${hhmm(it.start)} – ${hhmm(it.end)}</div><b>Lunch break</b>${!compact && m.length ? `<div class="rest">${m.map(r => restLink(r, x.seg)).join("")}</div>` : ""}${!compact ? famous(x.seg) : ""}</div></div></li>`;
+        h += `<li><span class="dot meal">🍽️</span><div class="stop"><div class="card" style="padding:12px 14px"><div class="time">${hhmm(it.start)} – ${hhmm(it.end)}</div><b>${D().input.baby ? "🍼 Lunch &amp; nap break" : "Lunch break"}</b>${!compact && m.length ? `<div class="rest">${m.map(r => restLink(r, x.seg)).join("")}</div>` : ""}${!compact ? famous(x.seg) : ""}</div></div></li>`;
         continue;
       }
       n++;

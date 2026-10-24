@@ -406,3 +406,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--thread);box-shadow:0 
 .demobar a{color:#ffb4a8;font-weight:700;margin-left:4px}
 .demo-ctl{border:1.5px dashed var(--thread);background:color-mix(in srgb,var(--thread) 5%,var(--paper))}
 .demo-ctl select{min-height:36px;padding:4px 8px}
+
+/* baby mode note on trips */
+.note.baby-note{border-color:#f4a6c8;background:#fdeef5;color:#5a2440}
+:root[data-theme=dark] .note.baby-note{background:#3a1f2d;color:#f7d3e4;border-color:#8a3d62}

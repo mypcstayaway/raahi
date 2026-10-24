@@ -47,6 +47,7 @@ async function setBaby(on) {
     const r = await api("/api/me", { prefs: { baby: { on, months: (state.user.prefs.baby || {}).months || null } } }, { method: "PUT" });
     setUser(r.user);
     toast(on ? "👶 Baby mode on: every plan, idea and loop now puts the baby first" : "Baby mode off");
+    if (/^#\/trip\//.test(location.hash)) render(); // show the "re-plan for my baby" option on this trip
   } catch (e) { toast(e.message, true); }
 }
 document.addEventListener("click", e => {
