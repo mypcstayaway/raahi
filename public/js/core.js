@@ -177,6 +177,8 @@ export function placeSearch({ placeholder = "Search a place or paste a Google Ma
 }
 
 export function locate() {
+  // Demo mode: no GPS. Use the spot picked in "Pretend I'm at", or the city centre.
+  if (state.config && state.config.demo) return Promise.resolve(window.__demoPos || { lat: 25.3093, lng: 83.0058, acc: 10 });
   return new Promise((ok, bad) => {
     if (!navigator.geolocation) return bad(new Error("This browser can't share your location."));
     navigator.geolocation.getCurrentPosition(p => ok({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }), e => bad(new Error(e.code === 1 ? "Location permission was denied. Allow it in your browser settings, or type the place." : "Couldn't get your location. Try again or type the place.")), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });

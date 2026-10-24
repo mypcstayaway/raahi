@@ -41,6 +41,13 @@ export async function render(view) {
     <div id="storiesBox" style="margin-top:28px">${storiesHTML()}</div>`;
   wireStories(view); // stops by itself when you leave the page
   let list = [];
+  // Demo mode: load the ready sample trips once (Varanasi today, Agra on a Friday, an Around-Coimbatore loop).
+  if (state.config.demo) {
+    try {
+      const have = await api("/api/trips");
+      if (!have.some(t => / · demo$/.test(t.title))) { $("#trips").innerHTML = `<div class="card mute">Loading sample trips…</div>`; await api("/api/demo/seed", {}); await new Promise(r => setTimeout(r, 900)); }
+    } catch (e) { toast(e.message, true); }
+  }
   try { list = await api("/api/trips"); } catch (e) { $("#trips").innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
   const box = $("#trips");
   if (!list.length) { box.innerHTML = `<div class="card mute">No trips yet. <a href="#/plan">Plan your first one</a> – it takes about a minute.</div>`; return; }

@@ -122,6 +122,13 @@ export function googleButton(el) {
     const slow = setTimeout(() => toast("Waking Raahi up… your saved trips are shown meanwhile."), 3000);
     const [cfg, me] = await Promise.all([api("/api/config"), api("/api/me")]).finally(() => clearTimeout(slow));
     state.config = cfg; setUser(me.user);
+    // Demo mode: badge on every page, and three ready sample trips the first time.
+    if (cfg.demo) {
+      document.body.classList.add("demo");
+      const tag = document.createElement("div"); tag.className = "demobar";
+      tag.innerHTML = `🎬 <b>Demo mode</b> · sample data, instant answers, no GPS needed · <a href="/demo/off">Exit demo</a>`;
+      document.body.prepend(tag);
+    }
     // New version on the server? Throw away the old saved app files and reload once.
     try {
       const was = localStorage.getItem("raahi.version");

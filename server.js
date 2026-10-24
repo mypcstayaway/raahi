@@ -71,7 +71,7 @@ const ropts = b => ({ fixed: b.fixed !== false, round: !!b.round });
 
 // ---------- API table: "METHOD /path/:param" ----------
 const routes = {
-  "GET /api/config": async () => ({ version: "2026-10-24c", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
+  "GET /api/config": async () => ({ demo: demo.isDemo(), version: "2026-10-24d", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
   "GET /api/me": async ({ user }) => ({ user }),
   "POST /api/auth/register": async ({ req, res, body, user, ip }) => auth.api.register(req, res, body, user, ip),
   "POST /api/auth/login": async ({ req, res, body, user, ip }) => auth.api.login(req, res, body, user, ip),
@@ -251,6 +251,22 @@ const routes = {
   // ideas & advice
   "POST /api/explore": async ({ user, body }) => explore(need(user), body),
   "POST /api/thread": async ({ user, body }) => thread(need(user), body),
+  // Demo mode: three ready sample trips (planned instantly from sample data).
+  "POST /api/demo/seed": async ({ user }) => {
+    need(user);
+    if (!demo.isDemo()) throw userErr("Open /demo first to use demo mode.");
+    const today = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
+    const fri = (() => { const d = new Date(today + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + ((5 - d.getUTCDay() + 7) % 7 || 7)); return d.toISOString().slice(0, 10); })();
+    const v = { label: "Varanasi, Uttar Pradesh, India", lat: 25.3176, lng: 82.9739 };
+    const ids = [
+      trips.create(user, { segments: [{ destination: v, days: 2, stay: { label: "Hotel near Dashashwamedh Ghat, Varanasi", lat: 25.3075, lng: 83.0085 } }], start: today, travellers: 2, diet: "vegetarian", interests: ["temples", "history", "food"], detail: "quick", startTime: "06:00", endTime: "22:00" }),
+      trips.create(user, { segments: [{ destination: { label: "Agra, Uttar Pradesh, India", lat: 27.1767, lng: 78.0081 }, days: 2, stay: { decide: true } }], start: fri, travellers: 4, group: "family", interests: ["history"], detail: "quick" }),
+    ];
+    const t = await thread(user, { home: { label: "Coimbatore, Tamil Nadu, India", lat: 11.0168, lng: 76.9558 }, days: 6, around: true });
+    const th = t.thread;
+    ids.push(trips.create(user, { segments: th.stops.map(x => ({ destination: { label: x.search, lat: x.lat, lng: x.lng }, days: Math.max(1, x.nights), stay: { decide: true }, thread: x })), thread: { title: th.title, summary: th.summary, home: t.home, gateway: th.gateway, returnLeg: th.returnLeg, loop: true }, start: fri, travellers: 2, detail: "quick" }));
+    return { ids };
+  },
   "POST /api/advice": async ({ user, body }) => advice(need(user), body),
 
   // chat
@@ -294,8 +310,18 @@ const compiled = Object.entries(routes).map(([k, fn]) => {
   return { method, re, names, fn };
 });
 
-const server = http.createServer(async (req, res) => {
+// Demo mode (visit /demo): same app, instant sample data for presentations. See lib/demo.js.
+const demo = require("./lib/demo");
+demo.install({ places, ai, tf: require("./lib/tinyfish"), db });
+const isDemoReq = req => /(?:^|;\s*)raahi_demo=1/.test(req.headers.cookie || "");
+const server = http.createServer((req, res) => demo.als.run({ demo: isDemoReq(req) }, () => handle(req, res)));
+async function handle(req, res) {
   const url = new URL(req.url, "http://x");
+  if (url.pathname === "/demo" || url.pathname === "/demo/off") {
+    const on = url.pathname === "/demo";
+    res.writeHead(302, { "Set-Cookie": `raahi_demo=${on ? 1 : 0}; Path=/; SameSite=Lax; Max-Age=${on ? 86400 : 0}${cfg.SECURE_COOKIES ? "; Secure" : ""}`, Location: on ? "/#/?demo=1" : "/" });
+    return res.end();
+  }
   const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
   if (url.pathname.startsWith("/api/")) {
     const started = Date.now();
@@ -333,7 +359,7 @@ const server = http.createServer(async (req, res) => {
     const ext = path.extname(file);
     send(req, res, 200, data, TYPES[ext] || "application/octet-stream", { "Cache-Control": [".html", ".js", ".css", ".webmanifest"].includes(ext) || p === "/sw.js" ? "no-cache" : "public, max-age=3600" });
   });
-});
+}
 
 // Render's free plan sleeps after 15 min without visitors, and waking takes ~1 min.
 // Visiting our own public address every 10 min keeps Raahi awake, so it always opens instantly.

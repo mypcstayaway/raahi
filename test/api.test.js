@@ -444,6 +444,35 @@ test("clear message when the hotel or 'here now' is far from the destination", a
   assert.match(here.data.error, /You're about \d+ km from Bengaluru right now/);
 });
 
+test("demo mode: instant sample trips, no outside services, kept apart from real data", async () => {
+  const d = { c: "" };
+  await call("POST", "/api/auth/guest", {}, d);
+  d.c += "; raahi_demo=1";
+  const before = { ...F.calls };
+  const cfg = await call("GET", "/api/config", null, d);
+  assert.strictEqual(cfg.data.demo, true);
+  const t0 = Date.now();
+  const seed = await call("POST", "/api/demo/seed", {}, d);
+  assert.strictEqual(seed.status, 200, JSON.stringify(seed.data));
+  assert.strictEqual(seed.data.ids.length, 3);
+  const v = (await waitTrip(seed.data.ids[0], d)).data;
+  assert.strictEqual(v.status, "ready", v.error);
+  assert.ok(Object.values(v.places).some(p => /Dashashwamedh/.test(p.name)), "Varanasi sample places");
+  assert.ok(v.info[0].foodStops.some(f => /Blue Lassi/.test(f.shop) && /₹80 \(per glass\)/.test(f.price)));
+  const thread = (await waitTrip(seed.data.ids[2], d)).data;
+  assert.strictEqual(thread.status, "ready", thread.error);
+  assert.ok(thread.input.segments.length >= 4 && thread.input.thread);
+  assert.ok(Date.now() - t0 < 8000, "demo planning is fast");
+  // No outside service was called in demo mode
+  for (const k of ["photon", "osrm", "overpass", "gemini", "weather"]) assert.strictEqual(F.calls[k], before[k], k + " was called in demo mode");
+  // Check in anywhere, no GPS
+  const pid = v.days[0].items.find(i => i.type === "visit").id;
+  const ci = await call("POST", `/api/trips/${seed.data.ids[0]}/checkin`, { placeId: pid, state: "arrived" }, d);
+  assert.strictEqual(ci.status, 200);
+  // Normal visitors are not in demo mode
+  assert.ok(!(await call("GET", "/api/config")).data.demo);
+});
+
 test("static pages and SPA paths", async () => {
   for (const p of ["/", "/route", "/t/abc"]) assert.strictEqual((await fetch(base + p)).status, 200);
   assert.strictEqual((await fetch(base + "/../server.js")).status, 404);

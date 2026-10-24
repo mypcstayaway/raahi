@@ -400,3 +400,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--thread);box-shadow:0 
 .foot-brand{font-family:var(--display);font-size:20px;color:var(--thread)!important}
 .foot-base{border-top:1px solid var(--line);padding:14px 16px 90px;font-size:12.5px}
 @media(max-width:720px){.foot-grid{grid-template-columns:1fr 1fr}}
+
+/* Demo mode */
+.demobar{background:#0f172a;color:#fff;text-align:center;font-size:13.5px;padding:7px 12px}
+.demobar a{color:#ffb4a8;font-weight:700;margin-left:4px}
+.demo-ctl{border:1.5px dashed var(--thread);background:color-mix(in srgb,var(--thread) 5%,var(--paper))}
+.demo-ctl select{min-height:36px;padding:4px 8px}

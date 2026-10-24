@@ -1,6 +1,6 @@
 // Makes Raahi open instantly: the app itself loads from the phone, then updates quietly in the background.
 // Trips you opened before also show at once if the server is slow to answer or you're offline.
-const CACHE = "raahi-v11"; // change on every release so phones pick up the new app
+const CACHE = "raahi-v12"; // change on every release so phones pick up the new app
 const SHELL = ["/", "/css/app.css", "/js/app.js", "/js/core.js", "/js/home.js", "/js/account.js", "/js/wizard.js", "/js/trip.js", "/js/explore.js", "/js/route.js", "/js/chat.js", "/js/companion.js", "/js/now.js", "/js/stories.js", "/icon.svg", "/manifest.webmanifest"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 // On an update: delete the old copy and reload open pages once, so nobody keeps seeing the old app.

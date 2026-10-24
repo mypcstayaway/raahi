@@ -210,7 +210,7 @@ export async function render(view, params, query, { shared } = {}) {
     if (!map) { map = makeMap($("#map"), [inp.segments[0].destination.lat || 27.18, inp.segments[0].destination.lng || 78.02], 12); layers = map && L.layerGroup().addTo(map); }
     else { $("#map").replaceWith(map.getContainer()); setTimeout(() => map.invalidateSize(), 50); }
     drawNext();
-    if (!shared && todayIdx >= 0 && companionOn(id) && !stopCompanion) runCompanion();
+    if (!shared && !state.config.demo && todayIdx >= 0 && companionOn(id) && !stopCompanion) runCompanion();
     if (shared && t.live && !liveShareTimer) liveShareTimer = setInterval(async () => { try { await load(); drawNext(); } catch {} }, 60000);
     drawTab();
     resumeAutoVerify();
@@ -590,11 +590,17 @@ export async function render(view, params, query, { shared } = {}) {
     if (li < 0) li = day;
     live.day = li;
     const x = d.days[li];
+    const stops = x.items.filter(i => i.type === "visit");
+    const demoBar = state.config.demo ? `<div class="card demo-ctl" style="margin-bottom:12px"><b>🎬 Demo controls</b> <span class="help">No GPS needed. Pick where you "are" and what time it "is".</span>
+        <div class="row" style="margin-top:8px;gap:10px"><label class="row" style="gap:6px">📍 Pretend I'm at <select id="dPos" style="width:auto"><option value="">The hotel</option>${stops.map(i => `<option value="${i.id}" ${live.demoAt === i.id ? "selected" : ""}>${esc(P(i.id).name)}</option>`).join("")}</select></label>
+        <label class="row" style="gap:6px">🕒 Pretend time <select id="dTime" style="width:auto"><option value="">Real time</option>${Array.from({ length: 31 }, (_, k) => 360 + k * 30).map(m => `<option value="${m}" ${live.demoNow === m ? "selected" : ""}>${hhmm(m)}</option>`).join("")}</select></label>
+        ${stops.length ? `<button class="btn small" id="dArrive" type="button">✅ I've arrived here</button>` : ""}</div></div>` : "";
     box.innerHTML = `
+      ${demoBar}
       ${onTrip ? "" : `<div class="note" style="margin-bottom:12px">${d.input.start ? `Your trip isn't today, so this is a preview of Day ${li + 1}.` : "No dates set, so this is a preview."} Live mode works best on the day itself.</div>`}
       ${dayButtons(li)}
       <div class="card" style="margin-bottom:14px">
-        <div class="between"><div><div class="mute" style="font-size:13px;font-weight:600">RIGHT NOW</div><div class="clock" id="clk">${esc(new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }))}</div></div>
+        <div class="between"><div><div class="mute" style="font-size:13px;font-weight:600">RIGHT NOW</div><div class="clock" id="clk">${live.demoNow != null ? esc(hhmm(live.demoNow)) : esc(new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }))}</div></div>
           <div style="text-align:right"><div id="locMsg" class="help" style="margin:0 0 6px">${live.pos ? "📍 Using your location" : "Location not shared yet"}</div><button class="btn small" id="loc">📍 ${live.pos ? "Update location" : "Use my location"}</button></div></div>
         <label class="row" style="margin-top:10px;gap:8px;font-size:14px"><input type="checkbox" id="lunch" ${live.hadLunch ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--thread)"> I've already had lunch</label>
         <div class="row" style="margin-top:12px"><button class="btn main" id="chk">What's still possible today?</button>${state.config.tinyfish ? `<button class="btn" id="lvf">🔎 Check live on Google Maps</button>` : ""}${state.config.aiSearch ? `<button class="btn" id="lp">🔥 Crowds & news now</button>` : ""}</div>
@@ -602,10 +608,21 @@ export async function render(view, params, query, { shared } = {}) {
       <div id="lres"></div>
       <h3>Today's plan</h3>
       ${timeline(x, li)}`;
-    clockTimer = setInterval(() => { const c = $("#clk"); if (c) c.textContent = new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }); }, 20000);
+    clockTimer = setInterval(() => { const c = $("#clk"); if (c && live.demoNow == null) c.textContent = new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }); }, 20000);
     $$("[data-day]", box).forEach(b => (b.onclick = () => { live.day = +b.dataset.day; live.res = null; drawLive(box); }));
     wireTimeline(box, x);
     $("#lunch", box).onchange = e => (live.hadLunch = e.target.checked);
+    if (state.config.demo) {
+      const setAt = pid => { live.demoAt = pid || ""; const p = pid ? P(pid) : (x.from || d.input.segments[x.seg].destination); window.__demoPos = p && p.lat != null ? { lat: p.lat, lng: p.lng, acc: 10 } : null; live.pos = window.__demoPos; };
+      if (live.demoAt !== undefined) setAt(live.demoAt); else setAt("");
+      $("#dPos", box).onchange = e => { setAt(e.target.value); live.res = null; drawLive(box); };
+      $("#dTime", box).onchange = e => { live.demoNow = e.target.value === "" ? null : +e.target.value; live.res = null; drawLive(box); };
+      if ($("#dArrive", box)) $("#dArrive", box).onclick = async () => {
+        const pid = live.demoAt || (stops.find(i => !(d.checkins[i.id] && d.checkins[i.id].done)) || {}).id;
+        if (!pid) return toast("Pick a place first", true);
+        try { const r = await api(`/api/trips/${id}/checkin`, { placeId: pid, state: "arrived" }); D().checkins = r.checkins; live.demoAt = pid; toast(`Checked in at ${P(pid).name}`); drawLive(box); drawNext(); } catch (err) { toast(err.message, true); }
+      };
+    }
     $("#loc", box).onclick = async e => { busy(e.currentTarget, true, "Locating…"); try { live.pos = await locate(); $("#locMsg").textContent = `📍 Got it (±${Math.round(live.pos.acc)} m)`; } catch (err) { $("#locMsg").textContent = err.message; } busy(e.currentTarget, false); };
     $("#chk", box).onclick = e => check(e.currentTarget, box, x, li, onTrip);
     if ($("#lvf", box)) $("#lvf", box).onclick = () => startVerify(x.items.filter(i => i.type === "visit" && !P(i.id).food && !(d.checkins[i.id] && d.checkins[i.id].done)).map(i => i.id).slice(0, 6));
@@ -618,7 +635,7 @@ export async function render(view, params, query, { shared } = {}) {
     busy(btn, true, "Checking roads and opening times…");
     try {
       if (!live.pos) { try { live.pos = await locate(); } catch {} }
-      const nm = onTrip ? nowMin() : Math.max(x.start, nowMin());
+      const nm = live.demoNow != null ? live.demoNow : onTrip ? nowMin() : Math.max(x.start, nowMin());
       live.res = await api(`/api/trips/${id}/live`, { day: li, nowMin: nm, lat: live.pos && live.pos.lat, lng: live.pos && live.pos.lng, hadLunch: live.hadLunch });
       showLive(box, x, li);
     } catch (e) { toast(e.message, true); }

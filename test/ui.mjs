@@ -388,6 +388,27 @@ try {
 
   // Phone size
   const m = await page(390, 844, "mobile");
+  await step("demo mode: /demo → sample trips → live controls without GPS", async () => {
+    const dp = await page(1280, 860, "demo");
+    await dp.goto(BASE + "/demo");
+    await dp.waitForSelector(".demobar");
+    await dp.click("#guest"); await dp.waitForSelector("text=Let's get to know you"); await dp.click("#skip");
+    await dp.waitForSelector("text=Varanasi · demo", { timeout: 15000 });
+    await dp.waitForSelector("text=Agra · demo");
+    await shot(dp, "30-demo-home");
+    await dp.click("text=Varanasi · demo");
+    await dp.waitForSelector(".tl .stop-li", { timeout: 15000 });
+    await dp.click("[data-tab=live]");
+    await dp.waitForSelector(".demo-ctl");
+    await dp.selectOption("#dTime", "990");
+    const opt = await dp.$$eval("#dPos option", o => o.map(x => x.value).filter(Boolean)[1]);
+    await dp.selectOption("#dPos", opt);
+    await dp.click("#dArrive"); await dp.waitForSelector("text=Checked in at");
+    await dp.click("#chk");
+    await dp.waitForSelector("#lres .card", { timeout: 8000 });
+    await shot(dp, "31-demo-live");
+    await dp.context().close();
+  });
   await step("mobile: home, trip, live, chat", async () => {
     await m.goto(BASE + "/");
     await m.click("#guest");
