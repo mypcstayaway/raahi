@@ -64,6 +64,12 @@ try {
   await step("wizard: where / when (ask Raahi) / how long / stay / times / pace / likes / people / detail", async () => {
     // Home shows every feature, including Baby mode, Around one place and Thread trip
     for (const sel of ["#babyCard", "a.card[href='#/explore?mode=around']", "a.card[href='#/explore?mode=thread']"]) await p.waitForSelector(sel);
+    // Story slideshow: five illustrative stories, labelled as such, sliding one after another
+    await p.waitForSelector(".stories .st-slide");
+    if ((await p.$$eval(".st-slide", x => x.length)) !== 5) throw new Error("expected 5 stories");
+    if ((await p.$$eval(".st-label", x => x.filter(e => /Illustrative/.test(e.textContent)).length)) !== 5) throw new Error("every story must be labelled illustrative");
+    await p.click(".st-next"); await p.waitForSelector(".st-dots button[data-i='1'][aria-selected=true]");
+    await p.$eval(".stories", el => el.scrollIntoView()); await p.waitForTimeout(700); await shot(p, "03c-stories");
     await p.click("#babyCard"); await p.waitForSelector("#babyCard.on"); await p.waitForTimeout(400); await shot(p, "03b-home-baby-on");
     await p.click("#babyCard"); await p.waitForSelector("#babyCard:not(.on)");
     await p.click("a.card[href='#/plan']");

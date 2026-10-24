@@ -1,5 +1,6 @@
 import { $, $$, api, state, esc, dayName, todayISO, toast } from "./core.js";
 import { googleButton, afterLogin } from "./app.js";
+import { storiesHTML, wireStories } from "./stories.js";
 
 const ART = `<svg class="hero-art" viewBox="0 0 400 400" aria-hidden="true">
   <defs><pattern id="g" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="currentColor" stroke-opacity=".08"/></pattern></defs>
@@ -22,18 +23,23 @@ export async function render(view) {
   view.innerHTML = `
     <div class="between" style="margin-bottom:18px"><div><h1>Namaste${u.name ? ", " + esc(u.name.split(" ")[0]) : ""} 👋</h1><p class="mute" style="margin:0">Where are we going next?</p></div></div>
     <div id="today"></div>
-    <div class="cards" style="margin-bottom:28px">
-      <a class="card" href="#/plan"><div class="ic">🗺️</div><h3>Plan a trip</h3><p class="mute">Day-by-day plan in the shortest order, around opening times, lunch and your pace.</p></a>
+    <div class="cards" style="margin-bottom:10px">
+      <a class="card hero-card" href="#/plan"><div class="ic">🗺️</div><h3>Plan a trip</h3><p class="mute">Tell Raahi where and for how long. Get every day planned in the shortest order, around opening times, lunch and your pace, then guided live.</p><span class="btn main big" style="margin-top:12px">Start planning →</span></a>
       <a class="card" href="#/plan?here=1"><div class="ic">📍</div><h3>I'm here now</h3><p class="mute">Already at a place? Plan the rest of today from where you are, starting now.</p></a>
-      <a class="card" href="#/explore"><div class="ic">🧭</div><h3>Where can I go?</h3><p class="mute">Your days and budget → trip ideas, or a 🧵 thread: one loop through many places and back home.</p></a>
       <button type="button" role="switch" aria-checked="${!!(u.prefs && u.prefs.baby && u.prefs.baby.on)}" class="card babycard${u.prefs && u.prefs.baby && u.prefs.baby.on ? " on" : ""}" id="babyCard" style="text-align:left;font:inherit;color:inherit;cursor:pointer"><div class="between"><div class="ic">👶</div><i class="knob big" aria-hidden="true"></i></div><h3>Baby mode <span class="tag" id="babyState">${u.prefs && u.prefs.baby && u.prefs.baby.on ? "On" : "Off"}</span></h3><p class="mute">Travelling with a baby? Every plan skips risky places, adds nap breaks and baby-friendly stops.</p></button>
+    </div>
+    <h2 class="more-h">More ways to plan</h2>
+    <div class="cards small-cards" style="margin-bottom:28px">
+      <a class="card" href="#/explore"><div class="ic">🧭</div><h3>Where can I go?</h3><p class="mute">Your days and budget → trip ideas, or a 🧵 thread: one loop through many places and back home.</p></a>
       <a class="card" href="#/explore?mode=around"><div class="ic">🏞️</div><h3>Around one place</h3><p class="mute">"Going to Coimbatore for 6 days." 1 day there, then Palani, Kodaikanal and more, one after another.</p></a>
       <a class="card" href="#/explore?mode=thread"><div class="ic">🧵</div><h3>Thread trip</h3><p class="mute">"9 days from Agra, include Coimbatore." One loop through many places, every leg and tip, back home.</p></a>
       <a class="card" href="#/route"><div class="ic">🔀</div><h3>Route optimiser</h3><p class="mute">Paste a Google Maps link or type stops. Get the shortest order.</p></a>
     </div>
     <div class="between"><h2 style="margin:0">Your trips</h2><a class="btn small main" href="#/plan">+ New trip</a></div>
     <div id="trips" class="list" style="margin-top:12px"><div class="skeleton" style="height:70px"></div></div>
-    ${u.guest ? `<div class="note" style="margin-top:20px">You're using Raahi as a guest. <a href="#/login">Create a free account</a> to keep your trips safe and use them on other devices.</div>` : ""}`;
+    ${u.guest ? `<div class="note" style="margin-top:20px">You're using Raahi as a guest. <a href="#/login">Create a free account</a> to keep your trips safe and use them on other devices.</div>` : ""}
+    <div id="storiesBox" style="margin-top:28px">${storiesHTML()}</div>`;
+  wireStories(view); // stops by itself when you leave the page
   let list = [];
   try { list = await api("/api/trips"); } catch (e) { $("#trips").innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
   const box = $("#trips");
@@ -66,7 +72,7 @@ function landing(view) {
   view.innerHTML = `
     <section class="hero">
       <div>
-        <span class="tag red">Free · India & abroad</span>
+        <span class="eyebrow">Free · India & abroad · No card needed</span>
         <h1 style="margin-top:12px">Your whole trip, planned to the minute.<br>Then guided live.</h1>
         <p class="lead">Raahi plans every day in the shortest order, around opening times, lunch and your pace. On the trip, check in as you go and Raahi tells you what's still possible, what's crowded right now, and where to eat.</p>
         <div class="row" style="margin:22px 0 8px"><div id="gbtn"></div></div>
@@ -75,6 +81,14 @@ function landing(view) {
       </div>
       ${ART}
     </section>
+    <div class="stat-strip">
+      <div><b>Any city</b><span>India and abroad</span></div>
+      <div><b>16 stops</b><span>exact shortest order</span></div>
+      <div><b>Live checks</b><span>by web agents, today's hours</span></div>
+      <div><b>₹0</b><span>free to use</span></div>
+    </div>
+    <p class="section-eyebrow">What Raahi does</p>
+    <h2 class="section-title">Planned to the minute. Guided all day.</h2>
     <div class="cards">
       <div class="card feature"><div class="ic">🕰️</div><div><h3>Around real opening hours</h3><p class="mute">Closed on Fridays? Shuts at 5:30? Raahi plans around it and lets you know when a place won't fit.</p></div></div>
       <div class="card feature"><div class="ic">📍</div><div><h3>Live on the trip</h3><p class="mute">"It's 4:30, can I still make Guna Caves?" Tap once, get the answer and a new plan for the rest of the day.</p></div></div>
@@ -82,7 +96,9 @@ function landing(view) {
       <div class="card feature"><div class="ic">🍛</div><div><h3>Food that suits you</h3><p class="mute">Veg, Jain or non-veg: lunch and dinner spots near where you'll be, plus local dishes to try.</p></div></div>
       <div class="card feature"><div class="ic">🧭</div><div><h3>Where can I go?</h3><p class="mute">"I live in Agra, I have 6 days and ₹30,000." Get trip ideas with real road times.</p></div></div>
       <div class="card feature"><div class="ic">💬</div><div><h3>Ask Raahi anything</h3><p class="mute">Best time to go, how many days you need, what to wear, whether it's safe. Just ask.</p></div></div>
-    </div>`;
+    </div>
+    <div style="margin-top:32px">${storiesHTML()}</div>`;
+  wireStories(view);
   googleButton($("#gbtn"));
   $("#guest").onclick = async () => { try { state.after = "#/"; afterLogin(await api("/api/auth/guest", {})); } catch (e) { toast(e.message, true); } };
 }

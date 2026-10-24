@@ -84,7 +84,7 @@ test("plan a 2-day Agra trip with review step", async () => {
     let last = 0;
     for (const it of day.items) { assert.ok(it.start >= last - 1, "times in order"); last = it.end; }
     assert.ok(day.maps.length >= 1 && day.maps[0].startsWith("https://www.google.com/maps/dir/"));
-    assert.ok(day.weather && day.weather.max === 31);
+    if (day.date >= new Date().toISOString().slice(0, 10)) assert.ok(day.weather && day.weather.max === 31); // forecasts exist only from today on
     assert.ok(day.meals.dinner.length && day.meals.dinner[0].veg === "pure-veg", "veg restaurant first");
   }
   assert.ok(done.data.days[0].items.some(i => i.type === "meal"), "lunch break");
@@ -421,6 +421,7 @@ test("baby mode: shorter days, at most 3 stops, no risky places", async () => {
   const d = (await waitTrip(c.data.id)).data;
   assert.strictEqual(d.status, "ready", d.error);
   assert.ok(d.input.baby && d.input.baby.on, "trip remembers baby mode");
+  assert.ok(d.autoVerify && d.autoVerify.ids.length >= 1, "live checks start by themselves after planning");
   assert.ok(d.pace.baby && d.pace.maxStops <= 3);
   for (const day of d.days) {
     assert.ok(day.items.filter(i => i.type === "visit").length <= 3);

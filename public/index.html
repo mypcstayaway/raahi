@@ -11,10 +11,11 @@
 <link rel="preconnect" href="https://tile.openstreetmap.org">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
+<a class="skip" href="#view">Skip to content</a>
 <header class="top">
   <div class="wrap">
     <a class="logo" href="#/" aria-label="Raahi home">
@@ -28,6 +29,7 @@
       <a href="#/explore?mode=around" data-nav="around">Around one place</a>
       <a href="#/route" data-nav="route">Route optimiser</a>
     </nav>
+    <button class="textbtn" id="textSize" type="button" aria-label="Bigger text" title="Bigger text">A<sup>+</sup></button>
     <button class="babybtn" id="baby" type="button" role="switch" hidden aria-checked="false" title="Baby mode: plan everything for travelling with a baby">👶 <span>Baby mode</span><i class="knob" aria-hidden="true"></i></button>
     <a class="avatar" id="me" href="#/login" aria-label="Account" title="Account">?</a>
   </div>
@@ -35,6 +37,15 @@
 <div class="babybar" id="babybar" hidden>👶 <b>Baby mode is on.</b> Plans skip risky places, add nap breaks and baby-friendly stops, and keep travel legs short. <a href="#" id="babyOff">Turn off</a></div>
 
 <main id="view" class="wrap" tabindex="-1"></main>
+<footer class="site-foot no-print">
+  <div class="wrap foot-grid">
+    <div><b class="foot-brand">Raahi</b><p>The self-healing itinerary. Plans every day around real opening hours, guides you live, and re-plans when the day changes.</p></div>
+    <div><b>Plan</b><a href="#/plan">Plan a trip</a><a href="#/plan?here=1">I'm here now</a><a href="#/explore?mode=around">Around one place</a><a href="#/explore?mode=thread">Thread trip</a></div>
+    <div><b>Tools</b><a href="#/explore">Where can I go?</a><a href="#/route">Route optimiser</a><a href="#/now">My next step</a></div>
+    <div><b>Your data</b><p>Family share shows check-ins only, never live GPS. Your trips stay in your account.</p></div>
+  </div>
+  <div class="wrap foot-base">© 2026 Raahi · Built by Team Phoenix · Maps © OpenStreetMap contributors</div>
+</footer>
 
 <nav class="tabs" aria-label="Main">
   <a href="#/" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Trips</a>

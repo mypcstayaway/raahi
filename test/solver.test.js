@@ -58,3 +58,15 @@ test("reads one place from Google Maps links", () => {
   assert.equal(c.name, "Naini Lake, Nainital"); assert.equal(c.lat, undefined);
   assert.throws(() => parsePlace("https://example.com/x"));
 });
+
+test("language and baby mode reach every AI prompt", () => {
+  const P = require("../lib/prompts");
+  const seg = { destination: { label: "Agra" }, days: 2 };
+  const pr = P.planPrompt(seg, { travellers: 2, interests: [] }, { lang: "hi", baby: { on: true, months: 8 } }, 10);
+  assert.match(pr.prompt, /LANGUAGE: .*Hindi/);
+  assert.match(pr.prompt, /TRAVELLING WITH A BABY \(about 8 months old\)/);
+  const th = P.threadPrompt({ home: { label: "Coimbatore" }, days: 5, around: true }, { lang: "ta" });
+  assert.match(th.prompt, /AROUND-ONE-PLACE MODE/);
+  assert.match(th.prompt, /Tamil/);
+  assert.match(P.chatSystem({ prefs: { lang: "bn" } }), /reply in Bengali/);
+});

@@ -213,6 +213,7 @@ export async function render(view, params, query, { shared } = {}) {
     if (!shared && todayIdx >= 0 && companionOn(id) && !stopCompanion) runCompanion();
     if (shared && t.live && !liveShareTimer) liveShareTimer = setInterval(async () => { try { await load(); drawNext(); } catch {} }, 60000);
     drawTab();
+    resumeAutoVerify();
   }
 
   // ---------- next-step card + companion ----------
@@ -515,6 +516,14 @@ export async function render(view, params, query, { shared } = {}) {
   }
 
   const verifyState = {};
+  // Live checks Raahi started by itself after planning: show their progress and results.
+  function resumeAutoVerify() {
+    const av = D().autoVerify;
+    if (!av || shared || Date.now() - av.at > 10 * 60e3) return;
+    const ids = av.ids.filter(pid => !(D().verified || {})[pid]);
+    if (!ids.length) return;
+    api(`/api/trips/${id}/verify/status`, { placeIds: ids }).then(r => { Object.assign(verifyState, r.status); D().verified = r.verified; if ($("#tb")) drawTab(); pollVerify(); }).catch(() => {});
+  }
   async function startVerify(ids) {
     try {
       const r = await api(`/api/trips/${id}/verify`, { placeIds: ids });

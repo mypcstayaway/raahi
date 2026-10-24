@@ -97,7 +97,13 @@ export function startCompanion(tripId, getData, { onUpdate, onAlert, onStatus } 
   const id = navigator.geolocation.watchPosition(send, e => onStatus && onStatus(e.code === 1 ? "Location permission is off. Turn it on for auto check-in." : "Waiting for GPS…"), { enableHighAccuracy: true, maximumAge: 20000, timeout: 30000 });
   // Keep the screen's data fresh even when the phone isn't moving.
   const tick = setInterval(() => navigator.geolocation.getCurrentPosition(send, () => {}, { maximumAge: 60000, timeout: 20000 }), 60000);
-  return () => { stopped = true; navigator.geolocation.clearWatch(id); clearInterval(tick); };
+  // Keep the screen awake while Raahi guides you, so GPS check-ins keep working
+  // (a browser can't track location once the phone is locked). Re-asked when you come back to the tab.
+  let lock = null;
+  const awake = async () => { try { if ("wakeLock" in navigator && document.visibilityState === "visible" && !lock) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => (lock = null)); } } catch {} };
+  const onVis = () => { if (document.visibilityState === "visible") { awake(); try { navigator.geolocation.getCurrentPosition(send, () => {}, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }); } catch {} } };
+  awake(); document.addEventListener("visibilitychange", onVis);
+  return () => { stopped = true; navigator.geolocation.clearWatch(id); clearInterval(tick); document.removeEventListener("visibilitychange", onVis); if (lock) lock.release().catch(() => {}); };
 }
 
 export function companionOn(tripId) { try { return localStorage.getItem("raahi.companion." + tripId) !== "off"; } catch { return true; } }

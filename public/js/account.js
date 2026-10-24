@@ -1,4 +1,5 @@
 import { $, $$, api, state, esc, toast, busy, tiles, placeSearch, INTERESTS, PACES, DIETS, initials, decideTile, decideChip } from "./core.js";
+const LANGS = [["en", "English"], ["hi", "हिन्दी Hindi"], ["ta", "தமிழ் Tamil"], ["te", "తెలుగు Telugu"], ["bn", "বাংলা Bengali"], ["mr", "मराठी Marathi"], ["kn", "ಕನ್ನಡ Kannada"], ["ml", "മലയാളം Malayalam"], ["gu", "ગુજરાતી Gujarati"]];
 import { googleButton, afterLogin, setUser } from "./app.js";
 
 // ---------- sign in / create account ----------
@@ -59,7 +60,9 @@ function prefForm(p = {}) {
       <div class="chips" id="int">${decideChip("✨ Let Raahi decide (the best of each place)")}${INTERESTS.map(([v, t]) => `<button type="button" class="chip" data-v="${v}">${t}</button>`).join("")}</div></section>
     <section class="q-block"><div class="q">Your usual travel budget</div>
       <div class="tiles" id="bud">${BUDGET.map(([v, em, t, s]) => `<button type="button" class="tile" data-v="${v}"><span class="em">${em}</span><b>${t}</b><span>${s}</span></button>`).join("")}${decideTile("Good value, comfortable choices")}</div></section>
-    <section class="q-block"><div class="q">Where do you live?</div><p class="mute">Used for "Where can I go?" trip ideas from home.</p><div id="homeCity"></div></section>`;
+    <section class="q-block"><div class="q">Where do you live?</div><p class="mute">Used for "Where can I go?" trip ideas from home.</p><div id="homeCity"></div></section>
+    <section class="q-block"><div class="q">Language for plans and chat</div><p class="mute">Raahi writes descriptions, tips, loops and chat answers in this language. Place names stay in English too, so maps still work.</p>
+      <div class="chips" id="lang">${LANGS.map(([v, t]) => `<button type="button" class="chip" data-v="${v}">${t}</button>`).join("")}</div></section>`;
 }
 function wirePrefs(root, p = {}) {
   const pace = tiles($("#pace", root), { value: p.pace || "balanced" });
@@ -69,10 +72,11 @@ function wirePrefs(root, p = {}) {
   const bud = tiles($("#bud", root), { value: p.budgetStyle || "mid" });
   const home = placeSearch({ placeholder: "Your city, e.g. Agra", value: p.home || (p.homeCity ? { label: p.homeCity } : null), allowHere: true });
   $("#homeCity", root).appendChild(home.el);
+  const lang = tiles($("#lang", root), { value: p.lang || "en" });
   return () => {
     const h = home.get();
     const ints = int.get();
-    return { pace: pace.get() || "auto", early: early.get() === "yes", earlyDecide: early.get() === "decide" || !early.get(), diet: diet.get() && diet.get() !== "decide" ? diet.get() : "any", interests: ints.filter(x => x !== "decide"), interestsDecide: ints.includes("decide") || !ints.length, budgetStyle: bud.get() && bud.get() !== "decide" ? bud.get() : "mid", home: h, homeCity: h ? h.label : "" };
+    return { pace: pace.get() || "auto", early: early.get() === "yes", earlyDecide: early.get() === "decide" || !early.get(), diet: diet.get() && diet.get() !== "decide" ? diet.get() : "any", lang: lang.get() || "en", interests: ints.filter(x => x !== "decide"), interestsDecide: ints.includes("decide") || !ints.length, budgetStyle: bud.get() && bud.get() !== "decide" ? bud.get() : "mid", home: h, homeCity: h ? h.label : "" };
   };
 }
 

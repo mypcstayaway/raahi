@@ -26,6 +26,13 @@ let cleanup = null;
 export async function go(hash) { if (location.hash !== hash) location.hash = hash; else render(); }
 window.addEventListener("hashchange", render);
 
+// Bigger text for anyone who needs it (remembered on this device).
+const SIZES = ["", "big", "bigger"];
+function applySize(k) { document.documentElement.dataset.size = SIZES[k] || ""; const b = $("#textSize"); if (b) { b.setAttribute("aria-pressed", k > 0); b.title = ["Bigger text", "Even bigger text", "Normal text size"][k] || "Bigger text"; } }
+let sizeK = 0; try { sizeK = +localStorage.getItem("raahi.size") || 0; } catch {}
+applySize(sizeK);
+document.addEventListener("click", e => { if (e.target.closest("#textSize")) { sizeK = (sizeK + 1) % SIZES.length; try { localStorage.setItem("raahi.size", sizeK); } catch {} applySize(sizeK); toast(["Normal text size", "Bigger text", "Even bigger text"][sizeK]); } });
+
 // Baby mode: one switch for the whole website (saved in the user's preferences).
 function babyUI() {
   const u = state.user, on = !!(u && u.prefs && u.prefs.baby && u.prefs.baby.on);

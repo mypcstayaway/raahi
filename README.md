@@ -11,6 +11,9 @@ Free. No card. Works for India and abroad.
 - **Food.** Real restaurants near your lunch stop and your hotel (pure-veg ones first if you're vegetarian), plus local dishes to try.
 - **Where can I go?** "I live in Agra, 6 days, ₹30,000." Get trip ideas with real road distance from home, then plan one in a tap.
 - **🗺️ Around one place.** "Going to Coimbatore for 6 days": one day there, then Palani, Kodaikanal, Madurai… one after another, and back.
+- **Languages.** Plans, tips, loops and chat answers in Hindi, Tamil, Telugu, Bengali, Marathi, Kannada, Malayalam or Gujarati (Profile → Language). Menus are in English.
+- **Accessibility.** A⁺ button for bigger text, "Skip to content" link, calmer motion when your device asks for it, spoken status messages, and the main button on every form pinned at the bottom.
+- **Live checks start by themselves.** As soon as a plan is ready, TinyFish checks today's (or the first day's) top 3 stops in the background, so real opening hours and crowds are usually waiting before you tap anything.
 - **👶 Baby mode.** One switch in the top bar. Every plan, idea, loop and chat answer then avoids risky places (treks, steep climbs, adventure sports, very loud or crowded spots), adds nap and feeding breaks, keeps days short (9:30–18:00, max 3 stops) and travel legs under about 4 hours, and adds a 👶 note to each place (stroller, feeding room, queues).
 - **🧵 Thread trips.** "9 days from Agra, include Isha, Palani and Meenakshi Temple" (or "5 days in Thailand"). Raahi designs one loop through many places and back home: first reach Bengaluru by flight, then Coimbatore → Palani → Kodaikanal → Madurai, with how to travel each leg, when to leave and arrive, ritual timings ("start at 5, before the crowds"), official fees, scam warnings ("pay only at the counter"), where to stay and what to eat. TinyFish checks the named places' timings live, real road distances are measured, and Raahi suggests a shorter order if there is one. One tap turns it into a full day-by-day plan.
 - **Ask Raahi.** A chat box on every page that knows your trip.
@@ -74,6 +77,7 @@ Extra safety (optional): add a free monitor at uptimerobot.com that checks `http
 
 - Opening hours come from OpenStreetMap when it has them. Otherwise they're AI estimates, and the app labels which is which. Check before a long trip out.
 - Road times come from the free OSRM demo server: driving only, no live traffic. Raahi adds 15% for traffic plus 10 minutes per stop for parking and tickets.
+- GPS check-in works while Raahi is open. During live guidance Raahi keeps the screen awake and catches up the moment you come back to the app (a browser can't track location while the phone is locked).
 - The live "go now" score is the AI's summary of what a web search found in the past week. It's a guide, not a guarantee.
 - Gemini's free tier has daily limits, and live web searches are capped at about 500 a day. That's plenty for personal use. Google may use free-tier requests to improve its products.
 - Claude's API isn't free, so the default AI is Gemini. You can switch to Claude in `.env` if you ever want to.
