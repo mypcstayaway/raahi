@@ -71,7 +71,7 @@ const ropts = b => ({ fixed: b.fixed !== false, round: !!b.round });
 
 // ---------- API table: "METHOD /path/:param" ----------
 const routes = {
-  "GET /api/config": async () => ({ demo: demo.isDemo(), version: "2026-10-24g", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
+  "GET /api/config": async () => ({ demo: demo.isDemo(), version: "2026-10-30a", googleClientId: cfg.GOOGLE_CLIENT_ID || null, ai: ai.enabled(), aiSearch: ai.canSearch() || tf.enabled(), tinyfish: tf.enabled(), provider: cfg.AI_PROVIDER || null, model: ai.enabled() ? ai.model() : null }),
   "GET /api/me": async ({ user }) => ({ user }),
   "POST /api/auth/register": async ({ req, res, body, user, ip }) => auth.api.register(req, res, body, user, ip),
   "POST /api/auth/login": async ({ req, res, body, user, ip }) => auth.api.login(req, res, body, user, ip),
@@ -350,6 +350,7 @@ async function handle(req, res) {
     }
   }
   if (req.method !== "GET" && req.method !== "HEAD") return send(req, res, 405, "Not allowed", "text/plain");
+  if (url.pathname === "/video" || url.pathname === "/video.mp4") return sendVideo(req, res, path.join(PUBLIC, "media", "raahi-demo.mp4"));
   let p = decodeURIComponent(url.pathname);
   if (p === "/" || p === "/route" || p.startsWith("/t/")) p = "/index.html";
   const file = path.join(PUBLIC, path.normalize(p));
@@ -358,6 +359,25 @@ async function handle(req, res) {
     if (err) return send(req, res, 404, "Not found", "text/plain");
     const ext = path.extname(file);
     send(req, res, 200, data, TYPES[ext] || "application/octet-stream", { "Cache-Control": [".html", ".js", ".css", ".webmanifest"].includes(ext) || p === "/sw.js" ? "no-cache" : "public, max-age=3600" });
+  });
+}
+
+// The demo video at /video: streamed in pieces (Range requests), so it starts playing at once and can be skipped through.
+function sendVideo(req, res, file) {
+  fs.stat(file, (err, st) => {
+    if (err) return send(req, res, 404, "The demo video isn't uploaded yet.", "text/plain");
+    const base = { "Content-Type": "video/mp4", "Accept-Ranges": "bytes", "Cache-Control": "public, max-age=86400", "X-Content-Type-Options": "nosniff" };
+    const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+    if (m) {
+      let start = m[1] === "" ? Math.max(0, st.size - +m[2]) : +m[1], end = m[1] !== "" && m[2] !== "" ? Math.min(+m[2], st.size - 1) : st.size - 1;
+      if (start >= st.size || start > end) { res.writeHead(416, { "Content-Range": `bytes */${st.size}` }); return res.end(); }
+      res.writeHead(206, { ...base, "Content-Range": `bytes ${start}-${end}/${st.size}`, "Content-Length": end - start + 1 });
+      if (req.method === "HEAD") return res.end();
+      return fs.createReadStream(file, { start, end }).pipe(res);
+    }
+    res.writeHead(200, { ...base, "Content-Length": st.size });
+    if (req.method === "HEAD") return res.end();
+    fs.createReadStream(file).pipe(res);
   });
 }
 

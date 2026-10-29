@@ -1,6 +1,6 @@
 // Makes Raahi open instantly: the app itself loads from the phone, then updates quietly in the background.
 // Trips you opened before also show at once if the server is slow to answer or you're offline.
-const CACHE = "raahi-v15"; // change on every release so phones pick up the new app
+const CACHE = "raahi-v16"; // change on every release so phones pick up the new app
 const SHELL = ["/", "/css/app.css", "/js/app.js", "/js/core.js", "/js/home.js", "/js/account.js", "/js/wizard.js", "/js/trip.js", "/js/explore.js", "/js/route.js", "/js/chat.js", "/js/companion.js", "/js/now.js", "/js/stories.js", "/icon.svg", "/manifest.webmanifest"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 // On an update: delete the old copy and reload open pages once, so nobody keeps seeing the old app.
@@ -22,6 +22,7 @@ self.addEventListener("fetch", e => {
   const lib = /cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com/.test(u.host);
   const mine = u.origin === location.origin;
   if (!mine && !lib) return;
+  if (mine && (u.pathname === "/video" || u.pathname.startsWith("/media/"))) return; // videos stream straight from the server
   // App files and libraries: answer from the phone at once, refresh in the background.
   if (lib || (mine && !u.pathname.startsWith("/api/"))) {
     const key = mine && (u.pathname === "/" || u.pathname === "/route" || u.pathname.startsWith("/t/")) ? "/" : req;
